@@ -1,0 +1,174 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sphinx-lightbox"
+version = "2.0.10"
+description = "Click-to-enlarge images for Sphinx documentation"
+readme = "README.md"
+authors = [{name = "Aputsiak Niels Janussen"}]
+license = {text = "GPL-3.0-or-later"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Sphinx :: Extension",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Documentation :: Sphinx",
+    "Topic :: Software Development :: Documentation",
+]
+dependencies = [
+    "sphinx>=7.0",
+    "docutils>=0.18",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.0",
+    "coverage[toml]>=7.0",
+    "tox>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+    "types-docutils",
+]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-autobuild>=2021.3.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/sphinx-lightbox"
+Documentation = "https://sphinx-lightbox.readthedocs.io"
+Repository = "https://github.com/yourusername/sphinx-lightbox"
+Issues = "https://github.com/yourusername/sphinx-lightbox/issues"
+
+# --- Tool Configurations ---
+
+[tool.setuptools]
+packages = ["lightbox"]
+
+[tool.setuptools.package-data]
+lightbox = ["static/*.css"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Fast unit tests (no Sphinx required)",
+    "integration: Integration tests (requires Sphinx)",
+    "latex: LaTeX output tests",
+    "html: HTML output tests",
+    "slow: Slow tests (full builds)",
+]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=lightbox",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html",
+]
+filterwarnings = [
+    "error",
+    # Add specific ignores if needed:
+    # "ignore::DeprecationWarning:sphinx.*",
+]
+
+
+[tool.coverage.run]
+source_pkgs = ["lightbox"]
+omit = [
+    "*/tests/*",
+    "*/conftest.py",
+    "*/__pycache__/*",
+]
+branch = true
+
+[tool.coverage.paths]
+# Maps the installed package location (inside tox venvs) back to the source
+# tree so that coverage.py correctly attributes executed lines. Without this,
+# tox runs show 0% coverage because the measured path and the source path
+# don't match.
+lightbox = [
+    "lightbox",
+    "*/site-packages/lightbox",
+    "*\\site-packages\\lightbox",
+]
+
+[tool.coverage.report]
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]
+fail_under = 85
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["lightbox", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",  # Allow assert in tests
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+
+[tool.mypy]
+python_version = "3.10" 
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_defs = true  
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = "docutils.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sphinx.*"
+ignore_missing_imports = true
+follow_imports = "skip"        # Sphinx 9 uses py3.12 syntax; skip to avoid syntax errors

@@ -1,0 +1,32 @@
+# sphinx-lightbox development dependencies
+# Install with: pip install -r requirements-dev.txt
+# This includes all dependencies needed for testing, linting, and documentation
+
+# First install production dependencies
+-r requirements.txt
+
+# Testing framework
+pytest>=7.0
+pytest-cov>=4.0
+pytest-mock>=3.0
+
+# Test automation and multi-environment testing
+tox>=4.0
+
+# Code quality
+ruff>=0.1.0
+
+# Type checking
+mypy>=1.0
+types-docutils
+
+# Coverage reporting
+coverage[toml]>=7.0
+
+# Documentation building
+sphinx-autobuild>=2021.3.14
+
+# Build tools (for creating distributions)
+build>=0.10.0
+twine>=4.0.0
+

@@ -1,0 +1,78 @@
+# --- Virtual environments ---
+venv*/
+.venv*/
+env*/
+.env*/
+
+# --- Build output ---
+_build/
+dist/
+build/
+*.egg-info/
+*.egg
+
+# --- Tox ---
+.tox/
+
+# --- Python cache ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# --- Test & coverage ---
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# --- Type checking ---
+.mypy_cache/
+
+# --- Linting ---
+.ruff_cache/
+
+# --- Distribution / packaging ---
+MANIFEST
+pip-wheel-metadata/
+*.whl
+*.tar.gz
+
+# --- IDEs ---
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# --- OS files ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Sphinx environment pickle (generated, not source) ---
+docs/.doctrees/
+docs/environment.pickle

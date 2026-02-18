@@ -1,0 +1,9 @@
+# This file is part of the MiGrid Sphinx Extension for Sphinx documentation.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Lightbox extension for Sphinx — click-to-enlarge images in HTML output."""
+
+from .lightbox import setup
+
+__all__ = ["setup"]

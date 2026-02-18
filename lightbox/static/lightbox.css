@@ -1,0 +1,243 @@
+/* Lightbox extension for Sphinx — Pure CSS checkbox-toggle lightbox
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Architecture:
+ *   <input class="lightbox-toggle">   (hidden checkbox)
+ *   .lightbox-toggle:checked ~ .lightbox-overlay   (shows the overlay)
+ *
+ * Accessibility (WCAG 2.1 AA):
+ *   - Visible focus indicators on trigger and close controls.
+ *   - prefers-reduced-motion: disables transitions.
+ *   - prefers-contrast: more: high-contrast borders and outlines.
+ *   - role="dialog", aria-modal="true", aria-label on overlay (in HTML).
+ */
+
+/* -----------------------------------------------------------------------
+ * Hidden checkbox — drives the toggle state
+ * ----------------------------------------------------------------------- */
+.lightbox-toggle {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* -----------------------------------------------------------------------
+ * Container — wraps trigger + checkbox + overlay as siblings
+ * ----------------------------------------------------------------------- */
+.lightbox-container {
+    display: inline-block;
+    position: relative;
+}
+
+/* -----------------------------------------------------------------------
+ * Trigger — the thumbnail label the user clicks
+ * ----------------------------------------------------------------------- */
+.lightbox-trigger-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.lightbox-trigger-label img.lightbox-trigger {
+    max-width: 100%;
+    height: auto;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.lightbox-trigger-label:hover img.lightbox-trigger {
+    opacity: 0.85;
+}
+
+/* Focus indicator — visible outline on keyboard focus */
+.lightbox-trigger-label:focus {
+    outline: 3px solid #4A90D9;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.lightbox-trigger-label:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.lightbox-trigger-label:focus-visible {
+    outline: 3px solid #4A90D9;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+/* -----------------------------------------------------------------------
+ * Overlay — hidden by default, shown when checkbox is :checked
+ * ----------------------------------------------------------------------- */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.85);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Toggle: show overlay when checkbox is checked */
+.lightbox-toggle:checked ~ .lightbox-overlay {
+    display: flex;
+}
+
+/* -----------------------------------------------------------------------
+ * Overlay content — centres the image and caption
+ * ----------------------------------------------------------------------- */
+.lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 100vw;
+    max-height: 100vh;
+    position: relative;
+    z-index: 2;
+}
+
+.lightbox-content img {
+    display: block;
+    max-width: 100vw;
+    max-height: 100vh;
+    object-fit: contain;
+    height: auto;
+    background-color: white;
+}
+
+/* -----------------------------------------------------------------------
+ * Caption
+ * ----------------------------------------------------------------------- */
+.lightbox-caption {
+    color: #fff;
+    text-align: center;
+    margin-top: 0.75em;
+    padding: 0 1em;
+    font-weight: bold;
+    max-width: 80vw;
+}
+
+/* -----------------------------------------------------------------------
+ * Close button — positioned top-right over the overlay
+ * ----------------------------------------------------------------------- */
+.lightbox-close {
+    position: fixed;
+    top: 0.5em;
+    right: 0.75em;
+    z-index: 3;
+    font-size: 2.5em;
+    line-height: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.lightbox-close:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Focus indicator on close button */
+.lightbox-close:focus {
+    outline: 3px solid #4A90D9;
+    outline-offset: 2px;
+}
+
+.lightbox-close:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.lightbox-close:focus-visible {
+    outline: 3px solid #4A90D9;
+    outline-offset: 2px;
+}
+
+/* -----------------------------------------------------------------------
+ * Backdrop close — invisible label covering the backdrop area
+ * ----------------------------------------------------------------------- */
+.lightbox-backdrop-close {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    cursor: default;
+}
+
+/* -----------------------------------------------------------------------
+ * Utility class — optional border styling for thumbnails
+ * ----------------------------------------------------------------------- */
+.with-border {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+/* -----------------------------------------------------------------------
+ * Accessibility: prefers-reduced-motion
+ * ----------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .lightbox-trigger-label img.lightbox-trigger {
+        transition: none;
+    }
+
+    .lightbox-overlay {
+        transition: none;
+    }
+}
+
+/* -----------------------------------------------------------------------
+ * Accessibility: prefers-contrast (high contrast mode)
+ * ----------------------------------------------------------------------- */
+@media (prefers-contrast: more) {
+    .lightbox-trigger-label:focus,
+    .lightbox-trigger-label:focus-visible {
+        outline: 3px solid #000;
+        outline-offset: 3px;
+    }
+
+    .lightbox-close:focus,
+    .lightbox-close:focus-visible {
+        outline: 3px solid #fff;
+        outline-offset: 2px;
+    }
+
+    .lightbox-close {
+        background: #000;
+        border: 2px solid #fff;
+    }
+
+    .lightbox-overlay {
+        background-color: rgba(0, 0, 0, 0.95);
+    }
+
+    .lightbox-content img {
+        border: 2px solid #fff;
+    }
+
+    .lightbox-caption {
+        text-shadow: 0 1px 3px #000;
+    }
+}
+
+/* -----------------------------------------------------------------------
+ * Hidden helper image — used only to trigger Sphinx's ImageCollector.
+ * Must not be visible in the rendered page.
+ * ----------------------------------------------------------------------- */
+img.lightbox-hidden {
+    display: none !important;
+    width: 0;
+    height: 0;
+    position: absolute;
+    overflow: hidden;
+}

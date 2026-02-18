@@ -1,0 +1,6 @@
+# sphinx-lightbox production dependencies
+# Install with: pip install -r requirements.txt
+
+sphinx>=7.0
+docutils>=0.18
+
