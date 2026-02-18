@@ -6,6 +6,9 @@ Version 2.0.10 (2026)
 ----------------------
 
 Bug fixes and infrastructure improvements.
+Revised accessibility documentation regarding strict WCAG 2.1 AA adherence. 
+A pure CSS implementation cannot physically trap keyboard focus or support 
+the Escape key. Lightweight JavaScript added for better adherence.
 
 - **Fixed HTML image paths** — HTML visitor functions now resolve source-relative
   URIs to ``_images/<filename>`` output paths via ``builder.images``.
@@ -34,6 +37,21 @@ Bug fixes and infrastructure improvements.
 - **HTML test mock fixed** — ``_make_translator()`` in ``TestHtmlOutput`` now
   provides ``translator.builder.images = {}`` so ``_resolve_output_uri()``
   does not fail with ``TypeError: argument of type 'Mock' is not iterable``.
+- **Accessibility Upgrades (Progressive Enhancement)** — Added a lightweight, 
+  CSP-compliant JavaScript file (``lightbox.js``) to achieve strict WCAG keyboard 
+  compliance. The ``Enter`` and ``Space`` keys now natively activate focused image 
+  thumbnails, and the ``Escape`` key successfully closes any open lightbox.
+- **Fixed CSS/JS Registration** — Replaced the fragile manual asset copying 
+  mechanism with Sphinx's native ``builder-inited`` hook. The extension now 
+  safely injects its ``_static`` directory into ``html_static_path``, 
+  resolving race conditions where the CSS file would fail to load in the browser.
+- **Path Traversal Security Fix** — Replaced basic string-prefix checking 
+  with strict ``os.path.commonpath`` bounds checking to prevent malicious directory 
+  traversal payloads from reading files outside the Sphinx source directory.
+- **Graceful Aspect Ratio Fallback** — When Sphinx's native image parser fails 
+  to calculate dimensions for heavily compressed PNGs, the extension now emits a 
+  helpful build warning and gracefully falls back to a 1:1 aspect ratio to 
+  prevent build crashes.  
 
 Version 2.0.0 (2025)
 ---------------------

@@ -1,7 +1,8 @@
 # sphinx-lightbox
 
-A Sphinx extension providing accessible, CSS-only click-to-enlarge images.
-The lightbox uses a pure checkbox-toggle mechanism — no JavaScript required.
+A Sphinx extension providing accessible click-to-enlarge images. 
+The lightbox uses a CSS-driven checkbox-toggle mechanism, progressively 
+enhanced with lightweight JavaScript for strict WCAG keyboard compliance.
 
 This directory contains both the extension source and its self-referential
 documentation (the docs use the extension to render live examples).
@@ -40,7 +41,7 @@ open _build/html/index.html         # macOS
 |--------------------|-----------------------------------------------|
 | `make test`        | Run test suite (pytest)                       |
 | `make test-quick`  | Unit tests only (fastest)                     |
-| `make test-all`    | Full matrix: Python 3.8/3.10/3.12 × Sphinx 7/8/9 |
+| `make test-all`    | Full matrix: Python 3.10/3.12 × Sphinx 7/8/9 |
 | `make coverage`    | Tests with HTML coverage report               |
 | `make lint`        | Code style check (ruff)                       |
 | `make format`      | Auto-format code (ruff)                       |
@@ -58,13 +59,14 @@ sphinx-lightbox/
 ├── pyproject.toml           ← Package metadata and tool config
 ├── requirements.txt         ← Production dependencies
 ├── requirements-dev.txt     ← Development dependencies
-├── pytest.ini               ← Test configuration
 ├── tox.ini                  ← Multi-environment test matrix
 ├── lightbox/                ← Extension source code
 │   ├── __init__.py
 │   ├── lightbox.py
+│   ├── py.typed
 │   └── static/
-│       └── lightbox.css
+│       ├── lightbox.css
+│       └── lightbox.js
 ├── docs/                    ← Documentation source (RST files)
 │   ├── conf.py              ← Sphinx configuration
 │   ├── index.rst
@@ -80,7 +82,8 @@ sphinx-lightbox/
 │       └── example-detail.png
 └── tests/
     ├── conftest.py          ← Shared fixtures
-    └── test_latex.py        ← Full test suite (LaTeX + HTML + directive)
+    ├── test_lightbox.py     ← Core test suite (LaTeX + HTML + directive)
+    └── test_js.py           ← JavaScript smoke tests
 ```
 
 ## Self-Referential Design
@@ -92,6 +95,6 @@ extension are immediately visible when rebuilding the docs.
 
 ## Requirements
 
-- Python 3.8 or later
+- Python 3.10 or later
 - Sphinx 7.0 or later
 - `pdflatex` + `texlive-latex-extra` (for PDF builds via `make all` or `make docs-pdf`)

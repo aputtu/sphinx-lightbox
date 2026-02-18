@@ -124,3 +124,21 @@ Other Builders
 For builders that are neither HTML nor LaTeX (epub, man, texinfo, text),
 the extension emits a plain ``image`` node with the alt text, ensuring
 content is never silently dropped.
+
+
+Content Security Policy (CSP)
+-----------------------------
+
+The lightbox extension uses a lightweight, external JavaScript file to handle strict 
+WCAG keyboard navigation. Because it is loaded externally rather than inline, it 
+completely avoids the need for ``script-src 'unsafe-inline'``. 
+
+However, it utilizes dynamically generated inline styles to perfectly fit images to 
+the viewport without distortion.
+
+If your documentation is hosted on a domain with a strict Content Security 
+Policy, ensure your policy permits inline styles:
+
+.. code-block:: text
+
+   Content-Security-Policy: style-src 'self' 'unsafe-inline';

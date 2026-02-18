@@ -49,10 +49,10 @@ install-dev:
 
 # --- Testing ---
 
-test:
+test: lint
 	pytest
 
-test-quick:
+test-quick: lint
 	pytest -m unit
 
 test-all:
@@ -96,7 +96,7 @@ docs-pdf:
 	@echo "HTML docs: _build/html/index.html"
 	@echo "PDF:       _build/latex/sphinx-lightbox.pdf"
 
-all:
+all: lint
 	sphinx-build -W -j auto -b latex docs _build/latex
 	$(MAKE) -C _build/latex all-pdf
 	sphinx-build -W -j auto -b html docs _build/html

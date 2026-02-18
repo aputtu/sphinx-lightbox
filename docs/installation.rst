@@ -5,8 +5,8 @@ Installation
 Requirements
 ------------
 
-- Python 3.8 or later
-- Sphinx 7.2 or later
+- Python 3.10 or later
+- Sphinx 7.0 or later
 
 Install from source
 -------------------

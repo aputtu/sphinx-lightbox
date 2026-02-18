@@ -45,10 +45,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/sphinx-lightbox"
+Homepage = "https://github.com/aputtu/sphinx-lightbox"
 Documentation = "https://sphinx-lightbox.readthedocs.io"
-Repository = "https://github.com/yourusername/sphinx-lightbox"
-Issues = "https://github.com/yourusername/sphinx-lightbox/issues"
+Repository = "https://github.com/aputtu/sphinx-lightbox"
+Issues = "https://github.com/aputtu/sphinx-lightbox/issues"
 
 # --- Tool Configurations ---
 
@@ -56,7 +56,7 @@ Issues = "https://github.com/yourusername/sphinx-lightbox/issues"
 packages = ["lightbox"]
 
 [tool.setuptools.package-data]
-lightbox = ["static/*.css"]
+lightbox = ["static/*.css", "static/*.js", "py.typed"]
 
 
 [tool.pytest.ini_options]

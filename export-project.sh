@@ -8,10 +8,6 @@ OUTPUT_FILE="../sphinx-lightbox-export_${TIMESTAMP}.txt"
 
 echo "🔄 Exporting project to: $OUTPUT_FILE"
 
-# Define exclusion pattern for 'tree'
-# Matches: .git, .tox, venv, build artifacts, cache, IDE folders, AND images
-TREE_IGNORE='.git|.tox|venv*|.venv*|env*|dist|build|*.egg-info|_build|__pycache__|*.pyc|*.pdf|htmlcov|.coverage|.pytest_cache|.vscode|.idea|*.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico'
-
 {
     echo "# Sphinx Filter Tabs - Complete Project Export"
     echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -23,9 +19,14 @@ TREE_IGNORE='.git|.tox|venv*|.venv*|env*|dist|build|*.egg-info|_build|__pycache_
     echo "================================================================================"
     echo ""
     
-    # -a: All files (hidden included)
-    # -I: Ignore pattern
-    tree -a -I "$TREE_IGNORE"
+    # Using multiple -I flags guarantees exclusion across all versions of 'tree'
+    tree -a \
+        -I ".git" -I ".tox" -I "venv*" -I ".venv*" -I "env*" \
+        -I "dist" -I "build" -I "_build" -I "*.egg-info" \
+        -I "htmlcov" -I "__pycache__" -I ".pytest_cache" \
+        -I ".mypy_cache" -I ".ruff_cache" -I ".vscode" -I ".idea" \
+        -I "*.pyc" -I "*.pyo" -I "*.pdf" -I "*.png" -I "*.jpg" \
+        -I "*.jpeg" -I "*.gif" -I "*.svg" -I "*.ico"
     
     echo ""
     echo ""
@@ -34,9 +35,9 @@ TREE_IGNORE='.git|.tox|venv*|.venv*|env*|dist|build|*.egg-info|_build|__pycache_
     echo "================================================================================"
     echo ""
     
-    # Find files, pruning ignored directories to prevent traversal
+    # Explicit -type d ensures we prune whole directories safely
     find . \
-        \( \
+        -type d \( \
             -name ".git" -o \
             -name ".tox" -o \
             -name "venv*" -o \
@@ -44,11 +45,13 @@ TREE_IGNORE='.git|.tox|venv*|.venv*|env*|dist|build|*.egg-info|_build|__pycache_
             -name "env*" -o \
             -name "dist" -o \
             -name "build" -o \
+            -name "_build" -o \
             -name "*.egg-info" -o \
             -name "htmlcov" -o \
-            -name ".pytest_cache" -o \
             -name "__pycache__" -o \
-            -name "_build" -o \
+            -name ".pytest_cache" -o \
+            -name ".mypy_cache" -o \
+            -name ".ruff_cache" -o \
             -name ".vscode" -o \
             -name ".idea" \
         \) -prune -o \
@@ -59,13 +62,14 @@ TREE_IGNORE='.git|.tox|venv*|.venv*|env*|dist|build|*.egg-info|_build|__pycache_
         -not -name '.DS_Store' \
         -not -name 'Thumbs.db' \
         -not -name '.coverage' \
+        -not -name 'coverage.xml' \
         -not -name '*.png' \
         -not -name '*.jpg' \
-        -not -name 'export*.sh' \
         -not -name '*.jpeg' \
         -not -name '*.gif' \
         -not -name '*.svg' \
         -not -name '*.ico' \
+        -not -name 'export*.sh' \
         -print0 | xargs -0 -I {} sh -c '
             echo "=== {} ==="
             # Double check for binary content just in case

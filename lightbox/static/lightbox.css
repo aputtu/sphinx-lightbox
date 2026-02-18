@@ -101,6 +101,7 @@
     max-height: 100vh;
     position: relative;
     z-index: 2;
+    pointer-events: none; /* Let clicks pass through to backdrop */
 }
 
 .lightbox-content img {
@@ -110,6 +111,7 @@
     object-fit: contain;
     height: auto;
     background-color: white;
+    pointer-events: auto; /* Restore interaction for the image */
 }
 
 /* -----------------------------------------------------------------------
@@ -117,6 +119,7 @@
  * ----------------------------------------------------------------------- */
 .lightbox-caption {
     color: #fff;
+    pointer-events: auto; /* Restore interaction for the caption text */
     text-align: center;
     margin-top: 0.75em;
     padding: 0 1em;

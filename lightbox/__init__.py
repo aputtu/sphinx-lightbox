@@ -4,6 +4,6 @@
 
 """Lightbox extension for Sphinx — click-to-enlarge images in HTML output."""
 
-from .lightbox import setup
+from .lightbox import __version__, setup
 
-__all__ = ["setup"]
+__all__ = ["setup", "__version__"]

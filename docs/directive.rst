@@ -7,7 +7,8 @@ Directive Reference
 ``.. lightbox::``
 -----------------
 
-Creates a click-to-enlarge image with a CSS-only lightbox overlay.
+Creates a click-to-enlarge image using a CSS-driven lightbox overlay, 
+progressively enhanced with lightweight JavaScript for strict keyboard accessibility.
 
 **Argument:**
 
@@ -43,31 +44,47 @@ Creates a click-to-enlarge image with a CSS-only lightbox overlay.
 .. code-block:: html
 
    <div class="lightbox-container">
-     <label for="lightbox-0" class="lightbox-trigger-label"
+     <label for="lightbox-usage-1" class="lightbox-trigger-label"
             tabindex="0" role="button"
             aria-label="Enlarge image: Alt text">
        <img src="_images/photo.png" alt="Alt text"
             class="lightbox-trigger with-border"
             style="width: 60%;">
      </label>
-     <input type="checkbox" id="lightbox-0"
+     <input type="checkbox" id="lightbox-usage-1"
             class="lightbox-toggle" aria-hidden="true">
      <div class="lightbox-overlay" role="dialog"
           aria-modal="true" aria-label="Alt text">
-       <label for="lightbox-0" class="lightbox-close"
+       <label for="lightbox-usage-1" class="lightbox-close"
               tabindex="0" role="button"
               aria-label="Close lightbox">&times;</label>
        <div class="lightbox-content">
-         <img src="_images/photo.png" alt="Alt text"
-              class="with-border"
-              style="width: min(90vw, ...); height: min(90vh, ...);"
-              onload="this.style.setProperty('--aspect-ratio', ...);">
+            <img src="_images/photo.png" alt="Alt text"
+                 class="with-border"
+                 style="width: min(90vw, calc(90vh * 1.3333)); height: min(90vh, calc(90vw / 1.3333));">
          <p class="lightbox-caption">Caption text here.</p>
        </div>
-       <label for="lightbox-0" class="lightbox-backdrop-close"
+       <label for="lightbox-usage-1" class="lightbox-backdrop-close"
               aria-hidden="true"></label>
      </div>
    </div>
+
+The overlay image dimensions are calculated at build time from the actual
+image file. The ``width`` and ``height`` use CSS ``min()`` with the
+pre-calculated aspect ratio, so the image fits the viewport without
+distortion. If Sphinx cannot calculate the dimensions of a highly compressed 
+or corrupted image, a warning is emitted during the build and the overlay 
+gracefully falls back to a 1:1 aspect ratio to prevent crashes.
+
+**External URLs:**
+
+.. code-block:: rst
+
+   .. lightbox:: https://example.com/remote-image.png
+
+*Note: Because the lightbox requires build-time image dimension calculations
+to properly size the CSS overlay, external URLs bypass the lightbox and are
+gracefully rendered as standard Sphinx ``image`` nodes.*
 
 **LaTeX output:**
 
@@ -144,4 +161,20 @@ The extension defines four custom docutils nodes:
    ``LightboxTrigger`` and ``LightboxOverlay``.
 
 Each node has visitor function pairs registered for ``html``, ``latex``,
-``text``, ``man``, and ``texinfo`` builders.
+``epub``, ``text``, ``man``, and ``texinfo`` builders.
+
+
+Content Security Policy (CSP)
+-----------------------------
+
+The lightbox extension uses a lightweight, external JavaScript file (``lightbox.js``) 
+to handle strict WCAG keyboard navigation. Because it is loaded externally, it 
+completely avoids the need for ``script-src 'unsafe-inline'`` in your CSP.
+
+However, because the extension utilizes dynamically generated inline styles 
+to perfectly fit images to the viewport without distortion (based on build-time 
+aspect ratio calculations), your policy must permit inline styles:
+
+.. code-block:: text
+
+   Content-Security-Policy: style-src 'self' 'unsafe-inline';

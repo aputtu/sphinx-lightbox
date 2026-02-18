@@ -1,7 +1,6 @@
 .. meta::
-   :description: sphinx-lightbox — accessible, CSS-only click-to-enlarge
-      images for Sphinx documentation.
-   :keywords: sphinx, extension, lightbox, image, zoom, accessible, CSS-only
+   :description: sphinx-lightbox — accessible click-to-enlarge images for Sphinx documentation.
+   :keywords: sphinx, extension, lightbox, image, zoom, accessible
 
 ==================================
 sphinx-lightbox Documentation
@@ -9,12 +8,11 @@ sphinx-lightbox Documentation
 
 **Version:** |release|
 
-.. rubric:: Accessible, CSS-only click-to-enlarge images for Sphinx.
+.. rubric:: Accessible click-to-enlarge images for Sphinx.
 
 ``sphinx-lightbox`` is a Sphinx extension that provides click-to-enlarge image
-viewing in HTML output using a pure CSS checkbox-toggle mechanism — no
-JavaScript required.  Images are rendered as standard figures in LaTeX/PDF
-output, and as plain images in other builders.
+viewing in HTML output using a CSS-driven checkbox-toggle mechanism, progressively 
+enhanced with lightweight JavaScript for strict WCAG keyboard compliance.
 
 .. only:: html
 
@@ -39,12 +37,13 @@ Click the image below to see the lightbox in action:
 Key Features
 ------------
 
-- **Pure CSS** — uses a checkbox-toggle pattern with no JavaScript dependency.
+- **CSS-Driven Toggle** — uses a highly robust checkbox-toggle pattern at its core, 
+  progressively enhanced with lightweight JavaScript for keyboard accessibility.
 - **Sphinx-native image handling** — images are registered with Sphinx's
   collector, land in ``_images/``, and participate in incremental builds.
 - **Multi-builder support** — full lightbox in HTML, ``\includegraphics``
   with caption in LaTeX/PDF, plain image fallback in other builders.
-- **WCAG 2.1 AA accessibility** — visible focus indicators, ``role="dialog"``,
+- **Accessibility-conscious design (WCAG guidelines)** — visible focus indicators, ``role="dialog"``,
   ``aria-modal``, ``aria-label``, ``prefers-reduced-motion``, and
   ``prefers-contrast: more`` support.
 - **Proper node architecture** — custom docutils nodes with per-builder

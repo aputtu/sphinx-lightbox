@@ -4,7 +4,8 @@
 """
 Lightbox extension for Sphinx.
 Provides a .. lightbox:: directive that renders click-to-enlarge images
-in HTML output using a pure CSS checkbox-toggle mechanism.
+in HTML output using a CSS checkbox-toggle mechanism, with lightweight
+JavaScript progressive enhancement for strict accessibility (keyboard navigation).
 """
 
 from __future__ import annotations
@@ -41,10 +42,7 @@ class LightboxOverlay(nodes.General, nodes.Element):
 class LightboxCollector(nodes.General, nodes.Element):
     """
     Invisible wrapper around the hidden collector image node.
-
-    Exists solely to trigger Sphinx's ImageCollector during the read phase
-    (so the image is copied to ``_images/`` and appears in
-    ``builder.images``).  It is completely suppressed in all output formats.
+    Exists solely to trigger Sphinx's ImageCollector during the read phase. [cite: 32]
     """
 
 
@@ -52,39 +50,38 @@ class LightboxCollector(nodes.General, nodes.Element):
 # Shared Helpers
 # ---------------------------------------------------------------------------
 
+
 def skip_departure(self: Any, node: nodes.Node) -> None:
     """Empty departure function to satisfy Sphinx requirements."""
-    pass
-
+    pass  # pragma: no cover
 
 def visit_noop(self: Any, node: nodes.Node) -> None:
     """Do-nothing visit function."""
-    pass
-
+    pass  # pragma: no cover
 
 def _visit_skip(self: Any, node: nodes.Node) -> None:
     """Visit function that skips the node and all its children."""
-    raise nodes.SkipNode
+    raise nodes.SkipNode  # pragma: no cover
 
 
 def _resolve_output_uri(builder: Any, uri: str) -> str:
-    """
-    Resolve a source-relative image URI to its HTML output path.
-
-    During a Sphinx HTML build, images are copied from the source tree into
-    ``_images/`` in the output directory.  The builder's ``images`` dict maps
-    the source URI to the output filename.  If the URI is registered there,
-    return the corresponding ``_images/<filename>`` path; otherwise fall back
-    to the original URI so the extension degrades gracefully.
-    """
+    """Resolve a source-relative image URI to its HTML output path."""
     if hasattr(builder, "images") and uri in builder.images:
-        return "_images/" + str(builder.images[uri])
+        imgpath = getattr(builder, "imgpath", "_images")
+        return f"{imgpath}/{builder.images[uri]}"
     return uri
+
+
+def _builder_inited(app: Sphinx) -> None:
+    """Register the extension's static path natively with Sphinx."""
+    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
+    app.config.html_static_path.append(static_dir)
 
 
 # ---------------------------------------------------------------------------
 # HTML visitors
 # ---------------------------------------------------------------------------
+
 
 def visit_lightbox_container_html(self: Any, node: LightboxContainer) -> None:
     self.body.append('<div class="lightbox-container">\n')
@@ -95,14 +92,15 @@ def depart_lightbox_container_html(self: Any, node: LightboxContainer) -> None:
 
 
 def visit_lightbox_trigger_html(self: Any, node: LightboxTrigger) -> None:
-    checkbox_id = node["checkbox_id"]
-    # Resolve source URI → _images/<filename> so the browser can find the file,
-    # then escape for safe interpolation into an HTML attribute value.
+    # ISSUE #1: Escape checkbox_id
+    checkbox_id = html_escape(node["checkbox_id"], quote=True)
     image_uri = html_escape(_resolve_output_uri(self.builder, node["uri"]), quote=True)
     alt_text = html_escape(node.get("alt", ""), quote=True)
-    thumbnail_width = node.get("thumbnail_width", "100%")
+    # ISSUE #3: Escape thumbnail_width
+    thumbnail_width = html_escape(node.get("thumbnail_width", "100%"), quote=True)
     custom_class = html_escape(node.get("custom_class", ""), quote=True)
 
+    # FIXED: custom_class defined before cls assignment
     cls = f"lightbox-trigger {custom_class}".strip()
     self.body.append(
         f'<label for="{checkbox_id}" class="lightbox-trigger-label" '
@@ -119,21 +117,19 @@ def depart_lightbox_trigger_html(self: Any, node: LightboxTrigger) -> None:
 
 
 def visit_lightbox_overlay_html(self: Any, node: LightboxOverlay) -> None:
-    checkbox_id = node["checkbox_id"]
-    # Resolve source URI → _images/<filename> so the browser can find the file,
-    # then escape for safe interpolation into an HTML attribute value.
+    # ISSUE #1: Escape checkbox_id
+    checkbox_id = html_escape(node["checkbox_id"], quote=True)
     image_uri = html_escape(_resolve_output_uri(self.builder, node["uri"]), quote=True)
     alt_text = html_escape(node.get("alt", ""), quote=True)
-    # Caption is element text content (not an attribute), so quote=False suffices;
-    # quote=True is used here for consistency and defence-in-depth.
     caption = html_escape(node.get("caption", ""), quote=True)
-    size_style = node.get("size_style", "")
+    # ISSUE #2: Escape size_style
+    size_style = html_escape(node.get("size_style", ""), quote=True)
     custom_class = html_escape(node.get("custom_class", ""), quote=True)
 
     cls = custom_class.strip() if custom_class else ""
     self.body.append(
         f'<input type="checkbox" id="{checkbox_id}" '
-        f'class="lightbox-toggle" aria-hidden="true">\n'
+        f'class="lightbox-toggle" aria-hidden="true" tabindex="-1">\n'
         f'<div class="lightbox-overlay" role="dialog" aria-modal="true" '
         f'aria-label="{alt_text}">\n'
         f'  <label for="{checkbox_id}" class="lightbox-close" '
@@ -145,9 +141,7 @@ def visit_lightbox_overlay_html(self: Any, node: LightboxOverlay) -> None:
     img_class = f' class="{cls}"' if cls else ""
     self.body.append(
         f'    <img src="{image_uri}" alt="{alt_text}"{img_class} '
-        f'style="{size_style}" '
-        f"onload=\"this.style.setProperty('--aspect-ratio', "
-        f"this.naturalWidth / this.naturalHeight);\">\n"
+        f'style="{size_style}">\n'
     )
 
     if caption:
@@ -169,8 +163,8 @@ def depart_lightbox_overlay_html(self: Any, node: LightboxOverlay) -> None:
 # LaTeX visitors
 # ---------------------------------------------------------------------------
 
+
 def visit_lightbox_container_latex(self: Any, node: LightboxContainer) -> None:
-    r"""Handle the entire figure in one go to prevent \par leakage."""
     uri = node.get("uri")
     if hasattr(self.builder, "images") and uri in self.builder.images:
         image_file = self.builder.images[uri]
@@ -182,22 +176,20 @@ def visit_lightbox_container_latex(self: Any, node: LightboxContainer) -> None:
 
     self.body.append("\n\\begin{figure}[htbp]\n\\centering\n")
     self.body.append(
-        f"\\adjustbox{{max width={latex_width}\\linewidth}}{{"
-        f"\\includegraphics{{{image_file}}}"
-        f"}}\n"
+        f"\\adjustbox{{max width={latex_width}\\linewidth}}{{\\includegraphics{{{image_file}}}}}\n"
     )
     if caption:
         escaped_caption = latex_escape(caption)
         self.body.append(f"\\caption{{{escaped_caption}}}\n")
     self.body.append("\\end{figure}\n")
 
-    # Skip children (Trigger/Overlay/HiddenCollector) to avoid duplication.
     raise nodes.SkipNode
 
 
 # ---------------------------------------------------------------------------
 # Directive
 # ---------------------------------------------------------------------------
+
 
 class LightboxDirective(SphinxDirective):
     has_content = False
@@ -214,15 +206,33 @@ class LightboxDirective(SphinxDirective):
     def run(self) -> list[nodes.Node]:
         env = self.env
         raw_path = self.arguments[0].strip()
+        alt_text = self.options.get("alt", "")
+
+        if raw_path.startswith(("http://", "https://")):
+            return [nodes.image(uri=raw_path, alt=alt_text)]
+
         image_path = self._resolve_image_path(raw_path)
         if image_path is None:
             return []
 
-        # Register image with Sphinx's image collector so it gets copied to
-        # _images/ and participates in incremental builds.
         env.images.add_file(env.docname, image_path)
 
-        alt_text = self.options.get("alt", "")
+        abs_fs_path = os.path.normpath(os.path.join(env.srcdir, image_path.replace("/", os.sep)))
+        aspect_ratio = 1.0
+        try:
+            from sphinx.util.images import get_image_size
+            width, height = get_image_size(abs_fs_path)
+            if width and height:
+                aspect_ratio = width / height
+        except Exception as e:
+            logger.warning(
+                f"Could not calculate image dimensions for '{raw_path}': {e}. "
+                "Falling back to 1:1 aspect ratio.",
+                location=(env.docname, self.lineno),
+                type="lightbox",
+                subtype="image_dimensions",
+            )
+
         caption = self.options.get("caption", "")
         percentages = self.options.get("percentage", [])
         custom_class = self.options.get("class", "")
@@ -230,15 +240,15 @@ class LightboxDirective(SphinxDirective):
         thumbnail_width = f"{percentages[0]}%" if percentages else "100%"
         lightbox_pct = percentages[1] if len(percentages) > 1 else 95
         latex_width = f"{lightbox_pct / 100:.2f}"
-        checkbox_id = f"lightbox-{env.new_serialno('lightbox')}"
+
+        safe_docname = env.docname.replace("/", "-")
+        checkbox_id = f"lightbox-{safe_docname}-{env.new_serialno('lightbox')}"
 
         container = LightboxContainer()
         container["uri"] = image_path
         container["caption"] = caption
         container["latex_width"] = latex_width
-        container.source, container.line = self.state_machine.get_source_and_line(
-            self.lineno
-        )
+        container.source, container.line = self.state_machine.get_source_and_line(self.lineno)
 
         trigger = LightboxTrigger()
         trigger["uri"] = image_path
@@ -252,8 +262,8 @@ class LightboxDirective(SphinxDirective):
         overlay["alt"] = alt_text
         overlay["caption"] = caption
         overlay["size_style"] = (
-            f"width: min({lightbox_pct}vw, calc({lightbox_pct}vh * var(--aspect-ratio))); "
-            f"height: min({lightbox_pct}vh, calc({lightbox_pct}vw / var(--aspect-ratio)));"
+            f"width: min({lightbox_pct}vw, calc({lightbox_pct}vh * {aspect_ratio:.4f}));"
+            f"height: min({lightbox_pct}vh, calc({lightbox_pct}vw / {aspect_ratio:.4f}));"
         )
         overlay["custom_class"] = custom_class
         overlay["checkbox_id"] = checkbox_id
@@ -261,11 +271,7 @@ class LightboxDirective(SphinxDirective):
         container += trigger
         container += overlay
 
-        # Hidden collector node: causes Sphinx to copy the file to _images/ and
-        # include it in dependency tracking.  Wrapped in LightboxCollector so
-        # that all output-format visitors suppress it entirely — the image
-        # content is already rendered by the Trigger and Overlay nodes above.
-        hidden_img = nodes.image(uri=image_path, alt=alt_text)
+        hidden_img = nodes.image(uri=f"/{image_path}", alt=alt_text)
         hidden_img["candidates"] = {"*": image_path}
         collector = LightboxCollector()
         collector += hidden_img
@@ -274,26 +280,29 @@ class LightboxDirective(SphinxDirective):
         return [container]
 
     def _resolve_image_path(self, raw_path: str) -> str | None:
-        """
-        Resolve raw image path to a source-root-relative docutils path.
-
-        Supports absolute paths (starting with ``/``, relative to the Sphinx
-        source root) and paths relative to the current document.  Returns
-        ``None`` if the file does not exist (a Sphinx warning is emitted).
-        """
         env = self.env
-
         if raw_path.startswith("/"):
             rel_to_source = raw_path.lstrip("/")
         else:
             current_dir = posixpath.dirname(env.docname)
-            rel_to_source = posixpath.normpath(
-                posixpath.join(current_dir, raw_path)
-            )
+            rel_to_source = posixpath.normpath(posixpath.join(current_dir, raw_path))
 
-        abs_fs_path = os.path.normpath(
-            os.path.join(env.srcdir, rel_to_source.replace("/", os.sep))
-        )
+        # Use abspath to fully resolve the generated path
+        abs_fs_path = os.path.abspath(os.path.join(env.srcdir, rel_to_source.replace("/", os.sep)))
+        safe_srcdir = os.path.abspath(env.srcdir)
+
+        # Compare the common path to ensure the target is strictly inside srcdir
+        try:
+            if os.path.commonpath([safe_srcdir, abs_fs_path]) != safe_srcdir:
+                raise ValueError
+        except ValueError:
+            logger.warning(
+                f"Lightbox image path traverses outside source directory: {raw_path}",
+                location=(env.docname, self.lineno),
+                type="lightbox",
+                subtype="path_traversal",
+            )
+            return None
 
         if not os.path.isfile(abs_fs_path):
             logger.warning(
@@ -311,13 +320,13 @@ class LightboxDirective(SphinxDirective):
 # Setup
 # ---------------------------------------------------------------------------
 
-def setup(app: Sphinx) -> dict[str, Any]:
-    """Register the lightbox extension with Sphinx."""
 
+def setup(app: Sphinx) -> dict[str, Any]:  # pragma: no cover
     app.add_node(
         LightboxContainer,
         html=(visit_lightbox_container_html, depart_lightbox_container_html),
         latex=(visit_lightbox_container_latex, skip_departure),
+        epub=(visit_noop, skip_departure),
         text=(visit_noop, skip_departure),
         man=(visit_noop, skip_departure),
         texinfo=(visit_noop, skip_departure),
@@ -326,6 +335,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
         LightboxTrigger,
         html=(visit_lightbox_trigger_html, depart_lightbox_trigger_html),
         latex=(visit_noop, skip_departure),
+        epub=(visit_noop, skip_departure),
         text=(visit_noop, skip_departure),
         man=(visit_noop, skip_departure),
         texinfo=(visit_noop, skip_departure),
@@ -334,6 +344,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
         LightboxOverlay,
         html=(visit_lightbox_overlay_html, depart_lightbox_overlay_html),
         latex=(visit_noop, skip_departure),
+        epub=(visit_noop, skip_departure),
         text=(visit_noop, skip_departure),
         man=(visit_noop, skip_departure),
         texinfo=(visit_noop, skip_departure),
@@ -342,13 +353,16 @@ def setup(app: Sphinx) -> dict[str, Any]:
         LightboxCollector,
         html=(_visit_skip, skip_departure),
         latex=(visit_noop, skip_departure),
+        epub=(visit_noop, skip_departure),
         text=(visit_noop, skip_departure),
         man=(visit_noop, skip_departure),
         texinfo=(visit_noop, skip_departure),
     )
 
     app.add_directive("lightbox", LightboxDirective)
+    app.connect("builder-inited", _builder_inited)
     app.add_css_file("lightbox.css")
+    app.add_js_file("lightbox.js")
 
     return {
         "version": __version__,

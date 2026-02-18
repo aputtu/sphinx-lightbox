@@ -3,10 +3,10 @@
 # This documentation is self-referential: it uses the lightbox extension
 # to display its own example images.
 
-import sys
 import os
-from lightbox.lightbox import __version__ as _version
+import sys
 
+from lightbox.lightbox import __version__ as _version
 
 # -- Path setup ---------------------------------------------------------------
 # conf.py lives in docs/; the lightbox package is one level up at the
@@ -33,7 +33,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "venv*", "env*"]
 
 # -- Options for HTML output --------------------------------------------------
 html_theme = "alabaster"
-html_static_path = ["../lightbox/static"]
 html_title = "sphinx-lightbox"
 html_short_title = "sphinx-lightbox"
 
