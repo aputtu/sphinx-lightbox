@@ -40,7 +40,10 @@ the Escape key. Lightweight JavaScript added for better adherence.
 - **Accessibility Upgrades (Progressive Enhancement)** — Added a lightweight, 
   CSP-compliant JavaScript file (``lightbox.js``) to achieve strict WCAG keyboard 
   compliance. The ``Enter`` and ``Space`` keys now natively activate focused image 
-  thumbnails, and the ``Escape`` key successfully closes any open lightbox.
+  thumbnails, the ``Escape`` key closes any open lightbox, focus moves to the 
+  close button when the lightbox opens and returns to the trigger on close, and 
+  ``Tab``/``Shift+Tab`` are trapped within the open dialog. An idempotency guard 
+  prevents issues if the script is loaded twice.
 - **Fixed CSS/JS Registration** — Replaced the fragile manual asset copying 
   mechanism with Sphinx's native ``builder-inited`` hook. The extension now 
   safely injects its ``_static`` directory into ``html_static_path``, 
@@ -52,6 +55,20 @@ the Escape key. Lightweight JavaScript added for better adherence.
   to calculate dimensions for heavily compressed PNGs, the extension now emits a 
   helpful build warning and gracefully falls back to a 1:1 aspect ratio to 
   prevent build crashes.  
+- **LaTeX ``adjustbox`` package declared** — The extension now registers the
+  ``adjustbox`` package via ``app.add_latex_package()``, removing the implicit
+  dependency on users adding ``\usepackage{adjustbox}`` to their ``conf.py``
+  preamble.
+- **Hidden collector image class** — The invisible collector ``image`` node
+  now carries the ``lightbox-hidden`` CSS class, aligning the doctree with the
+  existing CSS rule and making intent explicit.
+- **Idempotent static path registration** — ``_builder_inited`` now guards
+  against duplicate ``html_static_path`` entries if the extension is loaded
+  more than once.
+- **New ``:latex-width:`` option** — Optional directive option to control PDF
+  image width independently of HTML sizing.  Accepts a float between 0 and 1
+  representing a fraction of ``\linewidth``.  When omitted, the second
+  ``:percentage:`` value is used as before.
 
 Version 2.0.0 (2025)
 ---------------------

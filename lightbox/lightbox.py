@@ -75,7 +75,8 @@ def _resolve_output_uri(builder: Any, uri: str) -> str:
 def _builder_inited(app: Sphinx) -> None:
     """Register the extension's static path natively with Sphinx."""
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
-    app.config.html_static_path.append(static_dir)
+    if static_dir not in app.config.html_static_path:
+        app.config.html_static_path.append(static_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -201,6 +202,7 @@ class LightboxDirective(SphinxDirective):
         "caption": directives.unchanged,
         "percentage": directives.positive_int_list,
         "class": directives.unchanged,
+        "latex-width": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -241,6 +243,24 @@ class LightboxDirective(SphinxDirective):
         lightbox_pct = percentages[1] if len(percentages) > 1 else 95
         latex_width = f"{lightbox_pct / 100:.2f}"
 
+        # Optional override: :latex-width: decouples PDF sizing from HTML
+        latex_width_override = self.options.get("latex-width")
+        if latex_width_override is not None:
+            try:
+                val = float(latex_width_override)
+                if not 0.0 < val <= 1.0:
+                    raise ValueError
+                latex_width = f"{val:.2f}"
+            except ValueError:
+                logger.warning(
+                    f"Invalid :latex-width: value '{latex_width_override}'. "
+                    "Expected a float between 0 and 1 (e.g. 0.8). "
+                    "Falling back to percentage-based width.",
+                    location=(env.docname, self.lineno),
+                    type="lightbox",
+                    subtype="invalid_option",
+                )
+
         safe_docname = env.docname.replace("/", "-")
         checkbox_id = f"lightbox-{safe_docname}-{env.new_serialno('lightbox')}"
 
@@ -273,6 +293,7 @@ class LightboxDirective(SphinxDirective):
 
         hidden_img = nodes.image(uri=f"/{image_path}", alt=alt_text)
         hidden_img["candidates"] = {"*": image_path}
+        hidden_img["classes"] = ["lightbox-hidden"]
         collector = LightboxCollector()
         collector += hidden_img
         container += collector
@@ -363,6 +384,7 @@ def setup(app: Sphinx) -> dict[str, Any]:  # pragma: no cover
     app.connect("builder-inited", _builder_inited)
     app.add_css_file("lightbox.css")
     app.add_js_file("lightbox.js")
+    app.add_latex_package("adjustbox")
 
     return {
         "version": __version__,

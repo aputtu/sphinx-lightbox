@@ -132,7 +132,108 @@ class TestLatexOutput:
 
 
 # ---------------------------------------------------------------------------
-# TestDirectiveIntegration (5 tests)
+# TestLatexWidthOption (7 tests)
+# ---------------------------------------------------------------------------
+
+
+class TestLatexWidthOption:
+    """Test the optional :latex-width: directive option."""
+
+    def _make_directive(self, sphinx_env, arguments, options):
+        state = Mock()
+        state.document.settings.env = sphinx_env
+        state_machine = Mock()
+        state_machine.get_source_and_line.return_value = ("test.rst", 10)
+        return LightboxDirective(
+            "lightbox", arguments, options, [], 1, 0, "", state, state_machine
+        )
+
+    @pytest.mark.unit
+    def test_latex_width_overrides_percentage(self, sphinx_env):
+        """Explicit :latex-width: should override the percentage-derived value."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"percentage": [50, 90], "latex-width": "0.80"}
+        )
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            res = directive.run()
+        assert res[0]["latex_width"] == "0.80"
+
+    @pytest.mark.unit
+    def test_latex_width_without_percentage(self, sphinx_env):
+        """:latex-width: should work even when :percentage: is not set."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"latex-width": "0.60"}
+        )
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            res = directive.run()
+        assert res[0]["latex_width"] == "0.60"
+
+    @pytest.mark.unit
+    def test_absent_latex_width_falls_back_to_percentage(self, sphinx_env):
+        """Without :latex-width:, the second percentage value is used."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"percentage": [50, 75]}
+        )
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            res = directive.run()
+        assert res[0]["latex_width"] == "0.75"
+
+    @pytest.mark.unit
+    def test_absent_latex_width_falls_back_to_default_95(self, sphinx_env):
+        """Without :latex-width: or :percentage:, the default 0.95 is used."""
+        directive = self._make_directive(sphinx_env, ["/i.png"], {})
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            res = directive.run()
+        assert res[0]["latex_width"] == "0.95"
+
+    @pytest.mark.unit
+    def test_invalid_latex_width_emits_warning_and_falls_back(self, sphinx_env):
+        """Invalid values should warn and keep the percentage-based default."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"percentage": [50, 90], "latex-width": "abc"}
+        )
+        with (
+            patch("lightbox.lightbox.os.path.isfile", return_value=True),
+            patch("lightbox.lightbox.logger") as mock_logger,
+        ):
+            res = directive.run()
+        # Falls back to percentage-derived value
+        assert res[0]["latex_width"] == "0.90"
+        assert mock_logger.warning.called
+        assert mock_logger.warning.call_args.kwargs.get("subtype") == "invalid_option"
+
+    @pytest.mark.unit
+    def test_out_of_range_latex_width_emits_warning(self, sphinx_env):
+        """Values outside (0, 1] should warn and keep the default."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"latex-width": "1.5"}
+        )
+        with (
+            patch("lightbox.lightbox.os.path.isfile", return_value=True),
+            patch("lightbox.lightbox.logger") as mock_logger,
+        ):
+            res = directive.run()
+        # Falls back to default 95%
+        assert res[0]["latex_width"] == "0.95"
+        assert mock_logger.warning.called
+
+    @pytest.mark.unit
+    def test_latex_width_does_not_affect_html_size_style(self, sphinx_env):
+        """:latex-width: must not change the CSS size_style on the overlay."""
+        directive = self._make_directive(
+            sphinx_env, ["/i.png"], {"percentage": [50, 90], "latex-width": "0.60"}
+        )
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            res = directive.run()
+        overlay = next(
+            n for n in res[0].children if isinstance(n, LightboxOverlay)
+        )
+        # CSS should still use the percentage value (90), not the latex-width
+        assert "min(90vw," in overlay["size_style"]
+
+
+# ---------------------------------------------------------------------------
+# TestDirectiveIntegration (6 tests)
 # ---------------------------------------------------------------------------
 
 
@@ -185,6 +286,16 @@ class TestDirectiveIntegration:
             res = directive.run()
         trigger = next(n for n in res[0].children if isinstance(n, LightboxTrigger))
         assert trigger["checkbox_id"] == "lightbox-nested-page-1"
+
+    @pytest.mark.integration
+    def test_hidden_collector_image_has_lightbox_hidden_class(self, sphinx_env):
+        directive = self._make_directive(sphinx_env, ["images/test.png"], {})
+        with patch("lightbox.lightbox.os.path.isfile", return_value=True):
+            result_nodes = directive.run()
+        collector = next(
+            n for n in result_nodes[0].children if n.__class__.__name__ == "LightboxCollector"
+        )
+        assert "lightbox-hidden" in collector.children[0]["classes"]
 
 
 # ---------------------------------------------------------------------------
@@ -732,7 +843,7 @@ class TestUriResolution:
 
 
 # ---------------------------------------------------------------------------
-# TestStaticPathRegistration (1 test)
+# TestStaticPathRegistration (2 tests)
 # ---------------------------------------------------------------------------
 
 
@@ -752,6 +863,20 @@ class TestStaticPathRegistration:
         assert len(app.config.html_static_path) == 1
         assert app.config.html_static_path[0] == "/tmp/src/static"
 
+
+    @pytest.mark.unit
+    def test_builder_inited_is_idempotent(self):
+        """Calling _builder_inited twice should not duplicate the static path."""
+        from lightbox.lightbox import _builder_inited
+
+        app = Mock()
+        app.config.html_static_path = []
+
+        with patch("os.path.dirname", return_value="/tmp/src"):
+            _builder_inited(app)
+            _builder_inited(app)
+
+        assert len(app.config.html_static_path) == 1
 
 # ---------------------------------------------------------------------------
 # TestImageDimensionCalculation (2 tests)
@@ -799,3 +924,27 @@ class TestImageDimensionCalculation:
         assert "1.0000" in overlay["size_style"]
         assert mock_logger.warning.called
         assert mock_logger.warning.call_args.kwargs.get("subtype") == "image_dimensions"
+        
+
+# ---------------------------------------------------------------------------
+# TestLatexPackageRegistration (1 test)
+# ---------------------------------------------------------------------------
+
+
+class TestLatexPackageRegistration:
+    """Test that the extension declares its LaTeX package dependency."""
+
+    @pytest.mark.unit
+    def test_setup_registers_adjustbox_package(self):
+        """setup() should call app.add_latex_package('adjustbox')."""
+        from unittest.mock import Mock
+
+        from lightbox.lightbox import setup
+
+        app = Mock()
+        app.config.html_static_path = []
+
+        setup(app)
+
+        app.add_latex_package.assert_any_call("adjustbox")
+

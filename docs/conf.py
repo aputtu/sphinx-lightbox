@@ -44,7 +44,6 @@ latex_elements = {
     "preamble": r"""
         \setlength{\headheight}{14pt}
         \addtolength{\topmargin}{-2pt}
-        \usepackage{adjustbox}
         \usepackage{needspace}
         \usepackage{etoolbox}
         \preto{\sphinxVerbatim}{\needspace{6\baselineskip}}

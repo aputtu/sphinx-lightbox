@@ -32,8 +32,19 @@ progressively enhanced with lightweight JavaScript for strict keyboard accessibi
    - **First value** — thumbnail width as a percentage of the container
      width.  Default: ``100``.
    - **Second value** — overlay display size as a percentage of the
-     viewport.  Used for both CSS (``vw``/``vh``) and LaTeX
-     (``\linewidth`` fraction).  Default: ``95``.
+     viewport.  Used for CSS (``vw``/``vh``) and, unless ``:latex-width:``
+     is set, also for the LaTeX ``\linewidth`` fraction.  Default: ``95``.
+
+``:latex-width:`` *(float, optional)*
+   LaTeX image width as a fraction of ``\linewidth``, between ``0`` and
+   ``1`` (exclusive/inclusive).  When set, this overrides the second
+   ``:percentage:`` value for LaTeX/PDF output only — HTML sizing is
+   unaffected.
+
+   This option is entirely optional.  When omitted, the extension derives
+   the LaTeX width from the second ``:percentage:`` value (default ``0.95``).
+
+   Example: ``:latex-width: 0.8`` produces ``\adjustbox{max width=0.80\linewidth}``.
 
 ``:class:`` *(string)*
    Additional CSS class(es) applied to the image elements.  The built-in
@@ -122,6 +133,19 @@ Fully specified:
       :caption: Example of the Archives page with a finalised archive.
       :class: with-border
       :percentage: 80 95
+
+Independent PDF sizing:
+
+.. code-block:: rst
+
+   .. lightbox:: /images/architecture.png
+      :alt: System architecture diagram.
+      :caption: High-level architecture overview.
+      :percentage: 60 90
+      :latex-width: 0.8
+
+Here the HTML thumbnail is 60% wide with a 90% overlay, while the PDF
+figure is constrained to 80% of ``\linewidth``.
 
 Document-relative path:
 

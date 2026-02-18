@@ -47,8 +47,9 @@ Controlling Size
 The ``:percentage:`` option accepts one or two integers:
 
 - **First value** — thumbnail width as a percentage of the container.
-- **Second value** — lightbox display size (used for both ``vw``/``vh`` in
-  CSS and ``\linewidth`` fraction in LaTeX).
+- **Second value** — lightbox display size (used for ``vw``/``vh`` in
+  CSS and, unless ``:latex-width:`` is set, also for the ``\linewidth``
+  fraction in LaTeX).
 
 .. code-block:: rst
 
@@ -57,12 +58,23 @@ The ``:percentage:`` option accepts one or two integers:
       :caption: 40% thumbnail width, 95% overlay size.
       :percentage: 40 95
 
-**Live example:**
+To control PDF sizing independently, add ``:latex-width:``:
+
+.. code-block:: rst
+
+   .. lightbox:: /images/example-detail.png
+      :alt: Smaller thumbnail, narrower in PDF.
+      :caption: 40% thumbnail, 95% HTML overlay, 60% PDF width.
+      :percentage: 40 95
+      :latex-width: 0.60
+
+**Live example** (compare this figure's width in the PDF with the others):
 
 .. lightbox:: /images/example-detail.png
-   :alt: Smaller thumbnail, large overlay.
-   :caption: 40% thumbnail width, 95% overlay size.
+   :alt: Smaller thumbnail, narrower in PDF.
+   :caption: 40% thumbnail, 95% HTML overlay, 60% PDF width.
    :percentage: 40 95
+   :latex-width: 0.60
 
 
 Adding a Border
@@ -112,10 +124,24 @@ LaTeX / PDF Output
 ------------------
 
 In LaTeX builds, each lightbox renders as a ``figure`` environment with
-``\includegraphics`` and ``\caption``.  The second ``:percentage:`` value
-controls the width as a fraction of ``\linewidth`` (e.g. ``95`` becomes
-``0.95\linewidth``).  The thumbnail is skipped — only the full-size image
-appears.
+``\includegraphics`` and ``\caption``.  By default, the second
+``:percentage:`` value controls the width as a fraction of ``\linewidth``
+(e.g. ``95`` becomes ``0.95\linewidth``).  The thumbnail is skipped — only
+the full-size image appears.
+
+To control PDF sizing independently of HTML, use the optional
+``:latex-width:`` option:
+
+.. code-block:: rst
+
+   .. lightbox:: /images/diagram.png
+      :alt: Architecture diagram.
+      :percentage: 60 90
+      :latex-width: 0.8
+
+This sets the HTML overlay to 90% of the viewport while the PDF figure
+uses 80% of ``\linewidth``.  When ``:latex-width:`` is omitted, the
+second ``:percentage:`` value is used as before.
 
 
 Other Builders
