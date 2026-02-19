@@ -32,7 +32,7 @@ Add ``lightbox`` to your Sphinx ``conf.py``:
        "lightbox",
    ]
 
-   # Make the CSS available to the HTML builder:
+   # Make the static assets (CSS & JS) available to the HTML builder:
    html_static_path = ["path/to/lightbox/static"]
 
 The extension automatically registers its CSS file.  No additional template
