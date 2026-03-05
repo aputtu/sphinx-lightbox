@@ -28,8 +28,10 @@
  * Container — wraps trigger + checkbox + overlay as siblings
  * ----------------------------------------------------------------------- */
 .lightbox-container {
-    display: inline-block;
+    display: block;
     position: relative;
+    margin: 1em 0;
+    overflow: hidden;
 }
 
 /* -----------------------------------------------------------------------
@@ -37,6 +39,7 @@
  * ----------------------------------------------------------------------- */
 .lightbox-trigger-label {
     display: inline-block;
+    vertical-align: top;
     cursor: pointer;
 }
 
