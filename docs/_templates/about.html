@@ -1,0 +1,7 @@
+{# The page title already carries the project name. Avoid Alabaster's duplicate
+   sidebar logo heading, which accessibility tooling still evaluates on generated
+   index pages even when hidden by responsive layout rules. #}
+<p class="slb-sidebar-home">
+  <a href="{{ pathto(root_doc)|e }}">{{ _('Home') }}</a>
+</p>
+

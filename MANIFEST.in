@@ -1,0 +1,25 @@
+include LICENSE
+include README.md
+include pyproject.toml
+
+recursive-include lightbox *.py
+recursive-include lightbox *.typed
+recursive-include lightbox/static *.css
+recursive-include lightbox/static *.js
+
+prune .github
+prune build
+prune dist
+prune docs
+prune htmlcov
+prune requirements
+prune scripts
+prune test-root
+prune tests
+
+global-exclude *.egg-info/*
+global-exclude *.py[cod]
+global-exclude __pycache__/*
+global-exclude .DS_Store
+global-exclude .coverage
+global-exclude .coverage.*

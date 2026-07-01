@@ -1,0 +1,60 @@
+/* Documentation-only contrast fixes for generated Pygments markup. */
+
+.slb-sidebar-home {
+    margin: 0 0 1rem;
+    font-weight: 700;
+}
+
+@media screen and (min-width: 941px) {
+    div.sphinxsidebar {
+        max-height: calc(100vh - 2rem);
+        overscroll-behavior: contain;
+        position: sticky;
+        top: 1rem;
+    }
+}
+
+.highlight .s,
+.highlight .sa,
+.highlight .sb,
+.highlight .sc,
+.highlight .dl,
+.highlight .s1,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sr,
+.highlight .ss,
+.highlight .sx {
+    color: #005a00;
+}
+
+.highlight .go,
+.highlight .nd {
+    color: #555555;
+}
+
+.highlight .gi {
+    color: #006a00;
+}
+
+.highlight .gr {
+    color: #b00000;
+}
+
+.highlight .na,
+.highlight .ni,
+.highlight .nl {
+    color: #805400;
+}
+
+a.reference code,
+a.reference code .pre {
+    color: #333333;
+}
+
+div.highlight pre {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}

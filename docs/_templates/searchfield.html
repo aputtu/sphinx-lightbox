@@ -1,0 +1,14 @@
+{# Keep Alabaster's compact sidebar search UI while naming the input directly
+   so generated docs have a valid accessibility contract across Sphinx releases. #}
+{%- if pagename != "search" and builder != "singlehtml" %}
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="{{ pathto('search') }}" method="get">
+      <input type="text" name="q" aria-label="{{ _('Search') }}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="{{ _('Search') }}"/>
+      <input type="submit" value="{{ _('Go') }}" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+{%- endif %}
+
