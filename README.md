@@ -1,5 +1,10 @@
 # sphinx-lightbox
 
+[![Tests and Docs Deployment](https://github.com/aputtu/sphinx-lightbox/actions/workflows/ci.yml/badge.svg)](https://github.com/aputtu/sphinx-lightbox/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/sphinx-lightbox.svg)](https://pypi.org/project/sphinx-lightbox/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sphinx-lightbox.svg)](https://pypi.org/project/sphinx-lightbox/)
+[![PyPI - License](https://img.shields.io/pypi/l/sphinx-lightbox.svg)](https://github.com/aputtu/sphinx-lightbox/blob/main/LICENSE)
+
 `sphinx-lightbox` is a Sphinx extension that turns standard `.. image::`
 and `.. figure::` directives into click-to-enlarge images in HTML output.
 It uses a CSS checkbox-toggle mechanism, progressively enhanced with a small
