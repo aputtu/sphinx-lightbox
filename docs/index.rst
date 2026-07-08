@@ -25,6 +25,12 @@ and gallery navigation.
    This documentation is *self-referential*: the live examples below are
    rendered by the extension you are reading about.
 
+Project Homes
+-------------
+
+- `GitHub repository <https://github.com/aputtu/sphinx-lightbox>`_
+- `PyPI package <https://pypi.org/project/sphinx-lightbox/>`_
+
 Image Example
 -------------
 
