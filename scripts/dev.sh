@@ -5,11 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENV_BIN="$PROJECT_ROOT/venv/bin"
 
-if [ ! -f "$VENV_BIN/python" ]; then
-    echo "Virtual environment not found. Run 'make setup' first."
-    exit 1
-fi
-
 PYTHON="$VENV_BIN/python"
 PIP="$VENV_BIN/pip"
 PYTEST="$VENV_BIN/pytest"
@@ -19,6 +14,21 @@ SPHINX_BUILD="$VENV_BIN/sphinx-build"
 PDF_DOWNLOAD="$PROJECT_ROOT/docs/_downloads/sphinx-lightbox.pdf"
 DOCS_VALIDATOR="$PROJECT_ROOT/scripts/validate_docs.py"
 DIST_VALIDATOR="$PROJECT_ROOT/scripts/validate_dist.py"
+STANDARDS_VALIDATOR="$PROJECT_ROOT/scripts/validate_standards.sh"
+DOCTREE_ROOT="$PROJECT_ROOT/docs/_build/doctrees"
+
+cd "$PROJECT_ROOT"
+
+case "${1:-}" in
+    clean | standards | help | --help | -h)
+        ;;
+    *)
+        if [ ! -f "$PYTHON" ]; then
+            echo "Virtual environment not found. Run 'make setup' first."
+            exit 1
+        fi
+        ;;
+esac
 
 print_status() {
     echo "[$(date +'%H:%M:%S')] $1"
@@ -36,8 +46,9 @@ run_tests() {
 
 run_lint() {
     print_status "Running ruff..."
-    "$RUFF" check lightbox tests docs/_ext scripts/validate_docs.py scripts/validate_dist.py
-    "$RUFF" format --check lightbox tests docs/_ext scripts/validate_docs.py scripts/validate_dist.py
+    "$RUFF" check lightbox tests docs/_ext scripts
+    "$RUFF" format --check lightbox tests docs/_ext scripts
+    bash -n scripts/*.sh
 }
 
 run_typecheck() {
@@ -55,7 +66,6 @@ pdf_download_is_stale() {
         find docs lightbox \
             \( -path "docs/_build" -o -path "docs/_downloads" -o -path "*/__pycache__" \) -prune \
             -o -type f \
-            \( -name "*.rst" -o -name "*.py" -o -name "*.css" -o -name "*.js" \) \
             -newer "$PDF_DOWNLOAD" \
             -print -quit
     )
@@ -66,15 +76,17 @@ pdf_download_is_stale() {
 build_pdf() {
     print_status "Building LaTeX documentation..."
     mkdir -p "$(dirname "$PDF_DOWNLOAD")"
-    touch "$PDF_DOWNLOAD"
-    "$SPHINX_BUILD" -W --keep-going -E -a -b latex docs docs/_build/latex
+    if [ ! -e "$PDF_DOWNLOAD" ]; then
+        touch "$PDF_DOWNLOAD"
+    fi
+    "$SPHINX_BUILD" -W --keep-going -E -a -d "$DOCTREE_ROOT/latex" -b latex docs docs/_build/latex
 
     print_status "Compiling PDF..."
     (cd docs/_build/latex && make)
 
     print_status "Refreshing PDF download..."
     mkdir -p docs/_downloads
-    cp docs/_build/latex/*.pdf "$PDF_DOWNLOAD"
+    cp docs/_build/latex/sphinx-lightbox.pdf "$PDF_DOWNLOAD"
 }
 
 refresh_pdf_download() {
@@ -89,7 +101,7 @@ refresh_pdf_download() {
 build_html() {
     refresh_pdf_download
     print_status "Building HTML documentation..."
-    "$SPHINX_BUILD" -W --keep-going -E -a -b html docs docs/_build/html
+    "$SPHINX_BUILD" -W --keep-going -E -a -d "$DOCTREE_ROOT/html" -b html docs docs/_build/html
 }
 
 validate_docs() {
@@ -97,8 +109,14 @@ validate_docs() {
     "$PYTHON" "$DOCS_VALIDATOR" docs/_build/html
 }
 
+validate_standards() {
+    print_status "Validating generated HTML, CSS, and SVG standards..."
+    bash "$STANDARDS_VALIDATOR" docs/_build/html
+}
+
 build_dist() {
     print_status "Building package distributions..."
+    rm -rf build dist ./*.egg-info
     "$PYTHON" -m build
     "$PYTHON" -m twine check dist/*
     "$PYTHON" "$DIST_VALIDATOR" dist
@@ -111,7 +129,7 @@ audit_dependencies() {
 
 clean_build() {
     print_status "Cleaning build artifacts..."
-    rm -rf docs/_build _build build dist *.egg-info htmlcov .pytest_cache .coverage .coverage.*
+    rm -rf docs/_build _build build dist ./*.egg-info htmlcov .pytest_cache .coverage ./.coverage.*
     rm -f docs/_downloads/*.pdf
     find . -type d -name "__pycache__" -prune -exec rm -rf {} +
     find . -type d -name ".mypy_cache" -prune -exec rm -rf {} +
@@ -120,7 +138,7 @@ clean_build() {
 
 watch_changes() {
     print_status "Watching documentation sources..."
-    "$VENV_BIN/sphinx-autobuild" docs docs/_build/html
+    "$VENV_BIN/sphinx-autobuild" -d "$DOCTREE_ROOT/html" docs docs/_build/html
 }
 
 show_help() {
@@ -135,9 +153,10 @@ show_help() {
     echo "  pdf        Build PDF docs"
     echo "  docs       Build PDF docs, HTML docs, and validate generated HTML"
     echo "  validate   Validate generated HTML docs"
+    echo "  standards  Validate generated HTML, CSS, and SVG with the Nu checker"
     echo "  build      Build sdist/wheel, run twine check, and validate contents"
     echo "  audit      Run pip-audit"
-    echo "  all        Run check, docs, build, and audit"
+    echo "  all        Run check, docs, standards, build, and audit"
     echo "  clean      Remove build artifacts"
     echo "  clean-all  Clean, then run all"
     echo "  watch      Auto-rebuild HTML docs"
@@ -178,6 +197,9 @@ case "${1:-}" in
     validate)
         validate_docs
         ;;
+    standards)
+        validate_standards
+        ;;
     build)
         build_dist
         ;;
@@ -192,6 +214,7 @@ case "${1:-}" in
         build_pdf
         build_html
         validate_docs
+        validate_standards
         build_dist
         audit_dependencies
         ;;
@@ -207,6 +230,7 @@ case "${1:-}" in
         build_pdf
         build_html
         validate_docs
+        validate_standards
         build_dist
         audit_dependencies
         ;;

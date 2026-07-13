@@ -59,13 +59,16 @@ Run ``make`` or ``make help`` to print the available targets.
      - Build PDF docs, build HTML docs, and validate the generated HTML.
    * - ``make validate``
      - Validate an existing ``docs/_build/html`` tree.
+   * - ``make standards``
+     - Validate generated HTML, CSS, and SVG with the current Nu checker.
    * - ``make build``
      - Build source and wheel distributions, run ``twine check``, and validate
        archive contents.
    * - ``make audit``
      - Run ``pip-audit`` against the local environment.
    * - ``make all``
-     - Run checks, docs, package build, and dependency audit.
+     - Run checks, docs, Nu standards validation, package build, and dependency
+       audit.
    * - ``make watch``
      - Start ``sphinx-autobuild`` for the documentation.
    * - ``make clean``
@@ -89,10 +92,34 @@ check:
 
    mkdir -p docs/_downloads
    touch docs/_downloads/sphinx-lightbox.pdf
-   python -m sphinx -W --keep-going -E -a -b html docs docs/_build/html
+   python -m sphinx -W --keep-going -E -a -d docs/_build/doctrees/html -b html docs docs/_build/html
    python scripts/validate_docs.py docs/_build/html
 
 ``tox -e docs`` also uses an HTML-only path with a placeholder PDF download.
+
+For strict HTML Living Standard and CSS/SVG syntax checks, run ``make
+standards`` after the HTML build. This downloads the current command-line Nu
+checker to a temporary file, verifies its release-published SHA-256 digest, and
+treats its warnings as failures. Java 17 or newer, ``curl``, and ``sha256sum``
+are required. Set both ``VNU_JAR_URL`` and ``VNU_JAR_SHA256`` when deliberately
+testing a different validator build.
+
+Browser Accessibility Checks
+----------------------------
+
+After building the HTML documentation, run the same Chromium keyboard and
+focus checks used by CI:
+
+.. code-block:: bash
+
+   python -m pip install playwright
+   python -m playwright install chromium
+   python scripts/browser_smoke.py docs/_build/html/index.html
+
+The browser check covers keyboard activation, modal focus entry and return,
+gallery switching, forward and reverse focus trapping, accessible control
+roles and names, visible focus indicators, and focused controls that remain
+rendered and unobscured at desktop and compact viewport sizes.
 
 Direct Script Usage
 -------------------
@@ -132,5 +159,6 @@ required tooling:
    make all
    tox -p auto
 
-``make all`` expects LaTeX for PDF generation and ``pip-audit`` for dependency
-auditing. The release checklist has the complete tagging and publishing steps.
+``make all`` expects LaTeX for PDF generation, Java, ``curl``, and
+``sha256sum`` for Nu validation, and ``pip-audit`` for dependency auditing. The
+release checklist has the complete tagging and publishing steps.

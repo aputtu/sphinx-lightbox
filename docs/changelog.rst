@@ -1,8 +1,50 @@
 Changelog
 =========
 
-Version 0.5 Beta (2026-07-01)
------------------------------
+Version 0.5.1 (2026-07-13)
+--------------------------
+
+- Fix focus restoration when gallery navigation switches between lightboxes.
+  Closing the incoming lightbox with Escape now returns focus to its own
+  trigger without briefly focusing the outgoing trigger.
+- Fix the focus trap for fixed-position lightbox controls and keep keyboard
+  focus visible and unobscured. Trigger and overlay controls expose accessible
+  button names and support Enter, Space, Escape, Tab, and Shift+Tab behavior
+  consistent with the applicable WCAG 2.2 success criteria.
+- Preserve ordinary visible images in EPUB and other non-lightbox builders,
+  provide readable accessible-name fallbacks, and initialize the JavaScript
+  enhancement correctly when it is loaded after ``DOMContentLoaded``.
+- Keep the image post-transform compatible with the complete supported Sphinx
+  7.0 through 9.1 range, including their different current-document and
+  application environment APIs.
+- Copy missing transformed images through Sphinx's configured image directory,
+  recognize remote URI schemes consistently, and prevent local image paths or
+  symlinks from escaping the compatibility directive's source and output trees.
+- Keep generated checkbox identifiers unique even when compatibility-directive
+  serials collide with native ``:name:`` identifiers later in the document.
+- Restrict the installed package payload to runtime Python, CSS, JavaScript,
+  and typing files. Harden distribution and generated-HTML validation against
+  unsafe paths, duplicate entries, links, source/archive mismatches, missing
+  accessible names, and invalid ARIA references. Add a current Nu HTML/CSS
+  standards gate with checksum verification for its downloaded validator.
+- Add real-browser regression coverage for pointer and keyboard interaction,
+  gallery switching, focus visibility, compact viewports, late script loading,
+  and the no-JavaScript fallback. Browser checks now gate package publication.
+- Make the standard ``image`` and ``figure`` directives the sole documented
+  authoring interface while retaining the original directive as an
+  undocumented 0.5.x compatibility bridge.
+- Preserve native image options such as width, height, scale, alignment,
+  loading behavior, names, and ordinary classes on transformed thumbnails.
+  Document builder-specific PDF examples and HTML figure wrapping with standard
+  Sphinx directives.
+- Keep Sphinx doctrees outside the deployable HTML directory and reject leaked
+  build-state files during documentation validation. Deduplicate generated
+  viewport metadata, add the project favicon, and keep the documentation title
+  readable without horizontal scrolling at 320 CSS pixels. Emit intrinsic
+  dimensions for local documentation images without changing their CSS sizing.
+
+Version 0.5.0 Beta (2026-07-01)
+-------------------------------
 
 First public beta of ``sphinx-lightbox``.
 

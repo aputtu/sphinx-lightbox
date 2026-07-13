@@ -6,6 +6,11 @@ The lightbox extension is built with an **accessibility-conscious design**.
 The core open/close behavior is HTML/CSS-first, and a small JavaScript file
 adds the keyboard and focus behavior that CSS alone cannot provide.
 
+This page covers the extension's interactive HTML output. Non-HTML builders
+keep Sphinx's native image and figure behavior; accessibility of a generated
+PDF depends on the project's LaTeX/PDF toolchain and requires a separate
+PDF/UA-oriented review.
+
 CSS-Only Toggle Mechanism
 -------------------------
 
@@ -28,11 +33,12 @@ The generated HTML includes:
 Keyboard Navigation
 -------------------
 
-All interactive elements have ``tabindex="0"`` and are reachable via the
-Tab key:
+All visible controls participate in sequential keyboard navigation. The custom
+trigger and close controls use ``tabindex="0"``; gallery controls are native
+buttons and are keyboard-focusable without an explicit ``tabindex``:
 
-1. **Tab** to the thumbnail image — it receives a visible focus outline.
-2. **Enter** or **Space** to open the lightbox (activates the label).
+1. **Tab** to the thumbnail control — it receives a visible focus outline.
+2. **Enter** or **Space** to open the lightbox.
 3. Focus automatically moves to the close button inside the overlay.
 4. **Tab** cycles within the overlay (focus is trapped inside the dialog).
 5. **ArrowLeft** and **ArrowRight** move between gallery items when gallery
@@ -46,7 +52,7 @@ Tab key:
    toggle mechanism that functions even if JavaScript is disabled in the
    browser. The JavaScript enhancement adds:
 
-   - Native ``Enter`` and ``Space`` key activation for focused controls.
+   - ``Enter`` and ``Space`` key activation for focused controls.
    - ``Escape`` key to close the overlay.
    - **Focus management** — focus moves to the close button when the
      lightbox opens and returns to the triggering thumbnail when it closes.
@@ -63,7 +69,7 @@ Visible focus outlines appear on both the trigger and close controls:
 
 .. code-block:: css
 
-   .lightbox-trigger-label:focus-visible {
+   .lightbox-trigger-control:focus-visible {
        outline: 3px solid #4A90D9;
        outline-offset: 3px;
    }
@@ -117,7 +123,8 @@ When using the lightbox extension, consider testing with:
    close and verify focus returns to the thumbnail.
 2. **Screen readers** — verify the dialog is announced (NVDA, VoiceOver,
    Orca).
-3. **Browser zoom at 200%** — ensure the overlay scales properly.
+3. **Reflow at 400% zoom or 320 CSS pixels** — ensure the page and overlay do
+   not require horizontal scrolling and focused controls remain visible.
 4. **Disabled JavaScript** — the lightbox opens and closes via the CSS
    checkbox toggle when activated with a pointer. Keyboard activation, Escape
    handling, focus management, focus trapping, and gallery keyboard navigation

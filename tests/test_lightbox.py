@@ -12,7 +12,6 @@ from docutils import nodes
 from sphinx.util.texescape import escape as latex_escape
 
 from lightbox.lightbox import (
-    LightboxCollector,
     LightboxContainer,
     LightboxDirective,
     LightboxOverlay,
@@ -33,7 +32,7 @@ def run_latex_visitor(translator, node):
 
 
 # ---------------------------------------------------------------------------
-# TestCaptionEscaping (6 tests)
+# TestCaptionEscaping
 # ---------------------------------------------------------------------------
 
 
@@ -67,7 +66,7 @@ class TestCaptionEscaping:
 
 
 # ---------------------------------------------------------------------------
-# TestLatexOutput (6 tests)
+# TestLatexOutput
 # ---------------------------------------------------------------------------
 
 
@@ -137,12 +136,12 @@ class TestLatexOutput:
 
 
 # ---------------------------------------------------------------------------
-# TestLatexWidthOption (7 tests)
+# TestLatexWidthOption
 # ---------------------------------------------------------------------------
 
 
-class TestLatexWidthOption:
-    """Test the optional :latex-width: directive option."""
+class TestLegacyLatexWidthOption:
+    """Test the legacy directive's retained PDF width compatibility option."""
 
     def _make_directive(self, sphinx_env, arguments, options):
         state = Mock()
@@ -228,7 +227,7 @@ class TestLatexWidthOption:
 
 
 # ---------------------------------------------------------------------------
-# TestDirectiveIntegration (6 tests)
+# TestDirectiveIntegration
 # ---------------------------------------------------------------------------
 
 
@@ -300,18 +299,18 @@ class TestDirectiveIntegration:
         assert res[0]["uri"] == data_uri
 
     @pytest.mark.integration
-    def test_hidden_collector_image_has_lightbox_hidden_class(self, sphinx_env):
+    def test_collector_image_remains_visible_to_fallback_builders(self, sphinx_env):
         directive = self._make_directive(sphinx_env, ["images/test.png"], {})
         with patch("lightbox.lightbox.os.path.isfile", return_value=True):
             result_nodes = directive.run()
         collector = next(
             n for n in result_nodes[0].children if n.__class__.__name__ == "LightboxCollector"
         )
-        assert "lightbox-hidden" in collector.children[0]["classes"]
+        assert collector.children[0]["classes"] == []
 
 
 # ---------------------------------------------------------------------------
-# TestStandardImageTransform (8 tests)
+# TestStandardImageTransform
 # ---------------------------------------------------------------------------
 
 
@@ -321,6 +320,7 @@ class TestStandardImageTransform:
     @staticmethod
     def _make_app(
         builder_format="html",
+        builder_name="html",
         all_images=False,
         image_policy="explicit",
         figure_policy="all",
@@ -330,6 +330,7 @@ class TestStandardImageTransform:
     ):
         app = Mock()
         app.builder.format = builder_format
+        app.builder.name = builder_name
         app.config.lightbox_all_images = all_images
         app.config.lightbox_images = image_policy
         app.config.lightbox_figures = figure_policy
@@ -337,14 +338,6 @@ class TestStandardImageTransform:
         app.config.lightbox_gallery = gallery_mode
         app.config.lightbox_gallery_wrap = gallery_wrap
 
-        serials = {}
-
-        def new_serialno(category):
-            serials.setdefault(category, 0)
-            serials[category] += 1
-            return serials[category]
-
-        app.env.new_serialno.side_effect = new_serialno
         return app
 
     @staticmethod
@@ -357,13 +350,78 @@ class TestStandardImageTransform:
     def test_image_with_lightbox_class_is_transformed(self):
         image = nodes.image(uri="sample.png", alt="Sample", classes=["lightbox"])
         doc = self._make_doc(image)
+        app = self._make_app()
 
-        transform_lightbox_images(self._make_app(), doc, "index")
+        transform_lightbox_images(app, doc, "index")
 
         assert isinstance(doc[0], LightboxContainer)
         assert doc[0][0]["uri"] == "sample.png"
         assert doc[0][0]["alt"] == "Sample"
         assert doc[0][0]["checkbox_id"] == "lightbox-index-1"
+        app.env.new_serialno.assert_not_called()
+
+    @pytest.mark.unit
+    def test_transform_is_idempotent_when_all_images_are_enabled(self):
+        image = nodes.image(uri="sample.png", alt="Sample")
+        doc = self._make_doc(image)
+        app = self._make_app(image_policy="all")
+
+        transform_lightbox_images(app, doc, "index")
+        transform_lightbox_images(app, doc, "index")
+
+        assert len(list(doc.findall(LightboxContainer))) == 1
+        assert len(list(doc.findall(LightboxOverlay))) == 1
+
+    @pytest.mark.unit
+    def test_standard_ids_do_not_collide_with_legacy_containers(self):
+        legacy = LightboxContainer()
+        legacy_trigger = LightboxTrigger(checkbox_id="lightbox-index-1")
+        legacy_overlay = LightboxOverlay(checkbox_id="lightbox-index-1")
+        legacy += legacy_trigger
+        legacy += legacy_overlay
+        image = nodes.image(uri="sample.png", classes=["lightbox"])
+        doc = self._make_doc(legacy, image)
+
+        transform_lightbox_images(self._make_app(), doc, "index")
+
+        assert doc[1][0]["checkbox_id"] == "lightbox-index-2"
+
+    @pytest.mark.unit
+    def test_checkbox_id_does_not_collide_with_native_named_image(self):
+        image = nodes.image(
+            uri="sample.png",
+            classes=["lightbox"],
+            ids=["lightbox-index-1"],
+        )
+        doc = self._make_doc(image)
+
+        transform_lightbox_images(self._make_app(), doc, "index")
+
+        trigger = next(child for child in doc[0] if isinstance(child, LightboxTrigger))
+        thumbnail = next(child for child in trigger if isinstance(child, nodes.image))
+        assert trigger["checkbox_id"] == "lightbox-index-2"
+        assert thumbnail["ids"] == ["lightbox-index-1"]
+
+    @pytest.mark.unit
+    def test_legacy_checkbox_id_is_renamed_when_native_id_collides(self):
+        legacy = LightboxContainer()
+        legacy_trigger = LightboxTrigger(checkbox_id="lightbox-index-1")
+        legacy_overlay = LightboxOverlay(checkbox_id="lightbox-index-1")
+        legacy += legacy_trigger
+        legacy += legacy_overlay
+        image = nodes.image(
+            uri="sample.png",
+            classes=["lightbox"],
+            ids=["lightbox-index-1"],
+        )
+        doc = self._make_doc(legacy, image)
+
+        transform_lightbox_images(self._make_app(), doc, "index")
+
+        standard_trigger = next(child for child in doc[1] if isinstance(child, LightboxTrigger))
+        assert legacy_trigger["checkbox_id"] == "lightbox-index-2"
+        assert legacy_overlay["checkbox_id"] == "lightbox-index-2"
+        assert standard_trigger["checkbox_id"] == "lightbox-index-3"
 
     @pytest.mark.unit
     def test_remote_image_with_lightbox_class_is_not_transformed(self):
@@ -384,16 +442,16 @@ class TestStandardImageTransform:
         assert isinstance(doc[0], nodes.image)
 
     @pytest.mark.unit
-    def test_transformed_image_keeps_collector_for_asset_copying(self):
+    def test_transformed_image_keeps_native_thumbnail_for_asset_copying(self):
         image = nodes.image(uri="images/sample.png", alt="Sample", classes=["lightbox"])
         doc = self._make_doc(image)
 
         transform_lightbox_images(self._make_app(), doc, "index")
 
-        collector = next(child for child in doc[0] if isinstance(child, LightboxCollector))
-        hidden_image = collector[0]
-        assert hidden_image["uri"] == "/images/sample.png"
-        assert hidden_image["candidates"] == {"*": "images/sample.png"}
+        trigger = next(child for child in doc[0] if isinstance(child, LightboxTrigger))
+        thumbnail = next(child for child in trigger if isinstance(child, nodes.image))
+        assert thumbnail["uri"] == "images/sample.png"
+        assert thumbnail["alt"] == ""
 
     @pytest.mark.unit
     def test_image_without_lightbox_class_is_left_alone(self):
@@ -432,6 +490,17 @@ class TestStandardImageTransform:
         assert isinstance(doc[0], nodes.image)
 
     @pytest.mark.unit
+    def test_epub_builds_do_not_transform_images(self):
+        image = nodes.image(uri="sample.png", classes=["lightbox"])
+        doc = self._make_doc(image)
+
+        transform_lightbox_images(
+            self._make_app(builder_format="html", builder_name="epub"), doc, "index"
+        )
+
+        assert isinstance(doc[0], nodes.image)
+
+    @pytest.mark.unit
     def test_figure_caption_is_copied_to_lightbox_overlay(self):
         image = nodes.image(uri="sample.png")
         caption = nodes.caption("", "Figure caption.")
@@ -442,7 +511,6 @@ class TestStandardImageTransform:
 
         container = figure[0]
         overlay = next(child for child in container if isinstance(child, LightboxOverlay))
-        assert container["caption"] == "Figure caption."
         assert overlay["caption"] == "Figure caption."
         assert figure[1].astext() == "Figure caption."
 
@@ -458,7 +526,6 @@ class TestStandardImageTransform:
 
         container = figure[0]
         overlay = next(child for child in container if isinstance(child, LightboxOverlay))
-        assert container["legend"] == "Longer explanation."
         assert overlay["legend"] == "Longer explanation."
         assert figure[2].astext() == "Longer explanation."
 
@@ -523,14 +590,30 @@ class TestStandardImageTransform:
         assert trigger["custom_class"] == "with-border"
 
     @pytest.mark.unit
-    def test_image_width_is_used_for_thumbnail_width(self):
-        image = nodes.image(uri="sample.png", classes=["lightbox"], width="45%")
+    def test_native_thumbnail_preserves_image_options(self):
+        image = nodes.image(
+            uri="sample.png",
+            alt="Example",
+            classes=["lightbox", "custom"],
+            width="45%",
+            height="120px",
+            scale=50,
+            loading="lazy",
+            ids=["named-image"],
+        )
         doc = self._make_doc(image)
 
         transform_lightbox_images(self._make_app(), doc, "index")
 
-        trigger = doc[0][0]
-        assert trigger["thumbnail_width"] == "45%"
+        trigger = next(child for child in doc[0] if isinstance(child, LightboxTrigger))
+        thumbnail = next(child for child in trigger if isinstance(child, nodes.image))
+        assert thumbnail["alt"] == ""
+        assert thumbnail["width"] == "45%"
+        assert thumbnail["height"] == "120px"
+        assert thumbnail["scale"] == 50
+        assert thumbnail["loading"] == "lazy"
+        assert thumbnail["ids"] == ["named-image"]
+        assert thumbnail["classes"] == ["lightbox-trigger", "no-scaled-link", "custom"]
 
     @pytest.mark.unit
     def test_image_alignment_is_preserved_on_container(self):
@@ -543,7 +626,7 @@ class TestStandardImageTransform:
 
 
 # ---------------------------------------------------------------------------
-# TestGalleryMetadata (5 tests)
+# TestGalleryMetadata
 # ---------------------------------------------------------------------------
 
 
@@ -651,7 +734,7 @@ class TestGalleryMetadata:
 
 
 # ---------------------------------------------------------------------------
-# TestSizeStyleFormula (4 tests)
+# TestSizeStyleFormula
 # ---------------------------------------------------------------------------
 
 
@@ -695,7 +778,7 @@ class TestSizeStyleFormula:
 
 
 # ---------------------------------------------------------------------------
-# TestMissingImage (4 tests)
+# TestMissingImage
 # ---------------------------------------------------------------------------
 
 
@@ -759,9 +842,30 @@ class TestMissingImage:
         assert mock_logger.warning.called, "Path traversal bypass succeeded!"
         assert mock_logger.warning.call_args.kwargs.get("subtype") == "path_traversal"
 
+    @pytest.mark.unit
+    def test_symlink_outside_source_directory_is_rejected(self, sphinx_env, tmp_path):
+        srcdir = tmp_path / "src"
+        srcdir.mkdir()
+        outside = tmp_path / "outside.png"
+        outside.write_bytes(b"outside")
+        try:
+            srcdir.joinpath("linked.png").symlink_to(outside)
+        except OSError as exc:
+            pytest.skip(f"symlinks unavailable: {exc}")
+
+        sphinx_env.srcdir = str(srcdir)
+        state = Mock()
+        state.document.settings.env = sphinx_env
+        directive = LightboxDirective("lightbox", ["/linked.png"], {}, [], 1, 0, "", state, Mock())
+
+        with patch("lightbox.lightbox.logger") as mock_logger:
+            assert directive.run() == []
+
+        assert mock_logger.warning.call_args.kwargs.get("subtype") == "path_traversal"
+
 
 # ---------------------------------------------------------------------------
-# TestHtmlOutput (13 tests)
+# TestHtmlOutput
 # ---------------------------------------------------------------------------
 
 
@@ -857,6 +961,25 @@ class TestHtmlOutput:
         )
 
     @pytest.mark.unit
+    def test_trigger_uses_filename_when_alt_text_is_empty(self):
+        from lightbox.lightbox import visit_lightbox_trigger_html
+
+        t = self._make_translator()
+        node = LightboxTrigger(
+            uri="images/server_diagram-final.png",
+            checkbox_id="l1",
+            alt="",
+            thumbnail_width="100%",
+            custom_class="",
+        )
+
+        visit_lightbox_trigger_html(t, node)
+
+        output = "".join(t.body)
+        assert "Enlarge image: server diagram final" in output
+        assert 'alt=""' in output
+
+    @pytest.mark.unit
     def test_trigger_custom_class_applied(self):
         from lightbox.lightbox import visit_lightbox_trigger_html
 
@@ -911,6 +1034,27 @@ class TestHtmlOutput:
         output = "".join(t.body)
         assert 'role="dialog"' in output
         assert 'aria-modal="true"' in output
+
+    @pytest.mark.unit
+    def test_overlay_uses_filename_for_dialog_name_when_alt_text_is_empty(self):
+        from lightbox.lightbox import visit_lightbox_overlay_html
+
+        t = self._make_translator()
+        node = LightboxOverlay(
+            uri="images/server_diagram-final.png",
+            checkbox_id="l1",
+            alt="",
+            caption="",
+            legend="",
+            custom_class="",
+            size_style="",
+        )
+
+        visit_lightbox_overlay_html(t, node)
+
+        output = "".join(t.body)
+        assert 'aria-label="server diagram final"' in output
+        assert 'alt="server diagram final"' in output
 
     @pytest.mark.unit
     def test_overlay_close_button_rendered(self):
@@ -968,7 +1112,7 @@ class TestHtmlOutput:
         visit_lightbox_overlay_html(t, node)
         output = "".join(t.body)
         assert "javascript:" not in output
-        assert 'style=""' in output
+        assert "style=" not in output
 
     @pytest.mark.unit
     def test_overlay_caption_rendered_when_present(self):
@@ -1110,7 +1254,7 @@ class TestHtmlOutput:
 
 
 # ---------------------------------------------------------------------------
-# TestHtmlEscaping (8 tests)
+# TestHtmlEscaping
 # ---------------------------------------------------------------------------
 
 
@@ -1293,7 +1437,7 @@ class TestHtmlEscaping:
 
 
 # ---------------------------------------------------------------------------
-# TestUriResolution (4 tests)
+# TestUriResolution
 # ---------------------------------------------------------------------------
 
 
@@ -1355,7 +1499,7 @@ class TestUriResolution:
 
 
 # ---------------------------------------------------------------------------
-# TestMissingImageCopy (2 tests)
+# TestMissingImageCopy
 # ---------------------------------------------------------------------------
 
 
@@ -1397,7 +1541,7 @@ class TestMissingImageCopy:
 
         app = Mock()
         app.builder.format = "html"
-        app.builder.imgpath = "_images"
+        app.builder.imagedir = "_images"
         app.outdir = str(outdir)
         app.env.srcdir = str(srcdir)
         app.env.images = {
@@ -1426,7 +1570,7 @@ class TestMissingImageCopy:
 
         app = Mock()
         app.builder.format = "html"
-        app.builder.imgpath = "_images"
+        app.builder.imagedir = "_images"
         app.outdir = str(outdir)
         app.env.srcdir = str(srcdir)
         app.env.images = {
@@ -1440,7 +1584,7 @@ class TestMissingImageCopy:
 
 
 # ---------------------------------------------------------------------------
-# TestSphinxEnvironmentMetadata (4 tests)
+# TestSphinxEnvironmentMetadata
 # ---------------------------------------------------------------------------
 
 
@@ -1501,16 +1645,26 @@ class TestSphinxEnvironmentMetadata:
 
         app.require_sphinx.assert_called_once_with("7.0")
         assert metadata["version"] == __version__
-        assert metadata["env_version"] == 1
+        assert metadata["env_version"] == 2
         assert metadata["parallel_read_safe"] is True
         assert metadata["parallel_write_safe"] is True
         connected_events = [call.args[0] for call in app.connect.call_args_list]
         assert "env-purge-doc" in connected_events
         assert "env-merge-info" in connected_events
+        app.add_post_transform.assert_called_once()
+        assert app.add_post_transform.call_args.args[0].__name__ == "LightboxImageTransform"
+
+    @pytest.mark.unit
+    def test_runtime_version_matches_distribution_metadata(self):
+        from importlib.metadata import version
+
+        from lightbox.lightbox import __version__
+
+        assert __version__ == version("sphinx-lightbox")
 
 
 # ---------------------------------------------------------------------------
-# TestStaticPathRegistration (2 tests)
+# TestStaticPathRegistration
 # ---------------------------------------------------------------------------
 
 
@@ -1546,7 +1700,7 @@ class TestStaticPathRegistration:
 
 
 # ---------------------------------------------------------------------------
-# TestImageDimensionCalculation (2 tests)
+# TestImageDimensionCalculation
 # ---------------------------------------------------------------------------
 
 

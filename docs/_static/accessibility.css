@@ -5,6 +5,41 @@
     font-weight: 700;
 }
 
+div.sphinxsidebar h2.sphinxsidebar-title {
+    color: #444444;
+    font-family: Georgia, serif;
+    font-size: 24px;
+    font-weight: normal;
+    margin: 0 0 5px;
+    padding: 0;
+}
+
+div.sphinxsidebar a.reference,
+div.toctree-wrapper a.reference {
+    display: inline-block;
+    min-height: 24px;
+}
+
+div.footer,
+div.footer a {
+    color: #595959;
+}
+
+span.viewcode-block:target {
+    background-color: #ffffdd;
+}
+
+/* Reserve image space without overriding percentage-based directive widths. */
+img[data-docs-intrinsic-size="true"] {
+    height: auto;
+}
+
+@media screen and (max-width: 940px) {
+    div.sphinxsidebar h2.sphinxsidebar-title {
+        color: #ffffff;
+    }
+}
+
 @media screen and (min-width: 941px) {
     div.sphinxsidebar {
         max-height: calc(100vh - 2rem);
@@ -54,7 +89,36 @@ a.reference code .pre {
     color: #333333;
 }
 
+div.sphinxsidebar a.reference code,
+div.sphinxsidebar a.reference code .pre {
+    color: inherit;
+}
+
 div.highlight pre {
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+@media screen and (max-width: 400px) {
+    div.body h1 {
+        font-size: 2rem;
+        overflow-wrap: normal;
+    }
+
+    div.body code.docutils,
+    div.body code.docutils .pre,
+    div.body dt.sig,
+    div.body dt.sig .pre {
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    table.indextable,
+    table.indextable tbody,
+    table.indextable tr,
+    table.indextable td {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+    }
 }

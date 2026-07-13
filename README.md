@@ -59,8 +59,9 @@ Common commands:
 | `make type` | Run `mypy` |
 | `make check` | Run lint, type checks, and tests |
 | `make docs` | Build PDF docs, HTML docs, and validate generated HTML |
+| `make standards` | Validate generated HTML, CSS, and SVG with the Nu checker |
 | `make build` | Build distributions, run `twine check`, and validate archive contents |
-| `make all` | Run check, docs, build, and dependency audit |
+| `make all` | Run check, docs, standards, build, and dependency audit |
 
 The documentation build writes HTML to `docs/_build/html/` and copies the PDF
 download into `docs/_downloads/sphinx-lightbox.pdf` before rebuilding HTML, the
@@ -94,6 +95,7 @@ sphinx-lightbox/
 - Python 3.10 or later
 - Sphinx 7.0 through 9.x
 - LaTeX tooling such as `latexmk` and `texlive-latex-extra` for PDF docs
+- Java 17 or later, `curl`, and `sha256sum` for the optional Nu standards gate
 
 ## License
 

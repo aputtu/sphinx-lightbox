@@ -6,7 +6,7 @@
  *   <input class="lightbox-toggle">   (hidden checkbox)
  *   .lightbox-toggle:checked ~ .lightbox-overlay   (shows the overlay)
  *
- * Accessibility (WCAG 2.1 AA):
+ * Accessibility (WCAG 2.2 AA):
  *   - Visible focus indicators on trigger and close controls.
  *   - prefers-reduced-motion: disables transitions.
  *   - prefers-contrast: more: high-contrast borders and outlines.
@@ -14,7 +14,7 @@
  */
 
 /* -----------------------------------------------------------------------
- * Utility — visually hidden text for label controls
+ * Utility — visually hidden text for custom button controls
  * ----------------------------------------------------------------------- */
 .lightbox-visually-hidden {
     position: absolute;
@@ -46,7 +46,6 @@
     display: block;
     position: relative;
     margin: 1em 0;
-    overflow: hidden;
 }
 
 .lightbox-container.align-center {
@@ -70,9 +69,12 @@
     cursor: pointer;
 }
 
+.lightbox-trigger-control {
+    display: inline-block;
+}
+
 .lightbox-trigger-label img.lightbox-trigger {
     max-width: 100%;
-    height: auto;
     cursor: pointer;
     transition: opacity 0.15s ease;
 }
@@ -82,17 +84,17 @@
 }
 
 /* Focus indicator — visible outline on keyboard focus */
-.lightbox-trigger-label:focus {
+.lightbox-trigger-control:focus {
     outline: 3px solid #4A90D9;
     outline-offset: 3px;
     border-radius: 2px;
 }
 
-.lightbox-trigger-label:focus:not(:focus-visible) {
+.lightbox-trigger-control:focus:not(:focus-visible) {
     outline: none;
 }
 
-.lightbox-trigger-label:focus-visible {
+.lightbox-trigger-control:focus-visible {
     outline: 3px solid #4A90D9;
     outline-offset: 3px;
     border-radius: 2px;
@@ -294,18 +296,14 @@
     .lightbox-trigger-label img.lightbox-trigger {
         transition: none;
     }
-
-    .lightbox-overlay {
-        transition: none;
-    }
 }
 
 /* -----------------------------------------------------------------------
  * Accessibility: prefers-contrast (high contrast mode)
  * ----------------------------------------------------------------------- */
 @media (prefers-contrast: more) {
-    .lightbox-trigger-label:focus,
-    .lightbox-trigger-label:focus-visible {
+    .lightbox-trigger-control:focus,
+    .lightbox-trigger-control:focus-visible {
         outline: 3px solid #000;
         outline-offset: 3px;
     }
@@ -367,16 +365,4 @@
         height: 2.75rem;
         font-size: 2rem;
     }
-}
-
-/* -----------------------------------------------------------------------
- * Hidden helper image — used only to trigger Sphinx's ImageCollector.
- * Must not be visible in the rendered page.
- * ----------------------------------------------------------------------- */
-img.lightbox-hidden {
-    display: none !important;
-    width: 0;
-    height: 0;
-    position: absolute;
-    overflow: hidden;
 }

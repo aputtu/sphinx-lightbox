@@ -37,6 +37,7 @@ html_title = "sphinx-lightbox"
 html_short_title = "sphinx-lightbox"
 html_static_path = ["_static"]
 html_css_files = ["accessibility.css"]
+html_favicon = "_static/favicon.png"
 
 # -- Options for LaTeX output -------------------------------------------------
 latex_elements = {

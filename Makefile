@@ -8,7 +8,7 @@ $(PYTHON):
 	@echo "No virtual environment found. Run 'make setup' first."
 	@exit 1
 
-.PHONY: help setup test lint type check html pdf docs validate build audit all clean clean-all watch
+.PHONY: help setup test lint type check html pdf docs validate standards build audit all clean clean-all watch
 
 help:
 	@echo "Usage: make <target>"
@@ -25,9 +25,10 @@ help:
 	@echo "  pdf        Build PDF docs"
 	@echo "  docs       Build PDF docs, HTML docs, and validate generated HTML"
 	@echo "  validate   Validate generated HTML docs"
+	@echo "  standards  Validate generated HTML, CSS, and SVG with the Nu checker"
 	@echo "  build      Build package distributions and validate contents"
 	@echo "  audit      Run pip-audit"
-	@echo "  all        Run check, docs, build, and audit"
+	@echo "  all        Run check, docs, standards, build, and audit"
 	@echo "  watch      Watch docs for changes"
 	@echo ""
 	@echo "Maintenance"
@@ -38,6 +39,9 @@ setup:
 	@bash $(SCRIPTS)/setup_dev.sh
 
 test lint type check html pdf docs validate build audit all watch: $(PYTHON)
+	@bash $(SCRIPTS)/dev.sh $@
+
+standards:
 	@bash $(SCRIPTS)/dev.sh $@
 
 clean:

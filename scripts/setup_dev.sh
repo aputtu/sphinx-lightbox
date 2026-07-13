@@ -2,9 +2,13 @@
 set -euo pipefail
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$PROJECT_ROOT"
 
 echo "Cleaning previous local development artifacts..."
-rm -rf venv .tox docs/_build _build build dist *.egg-info htmlcov .pytest_cache .coverage .coverage.*
+rm -rf venv .tox docs/_build _build build dist ./*.egg-info htmlcov .pytest_cache .coverage ./.coverage.*
 rm -f docs/_downloads/*.pdf
 find . -type d -name "__pycache__" -prune -exec rm -rf {} +
 find . -type d -name ".mypy_cache" -prune -exec rm -rf {} +

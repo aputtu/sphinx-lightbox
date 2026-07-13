@@ -20,6 +20,10 @@ and gallery navigation.
    You can also download this documentation as a
    :download:`PDF file <_downloads/sphinx-lightbox.pdf>`.
 
+   The HTML pages are the accessibility-tested edition. The PDF is a
+   print-oriented Sphinx/LaTeX rendering and is not claimed to conform to
+   PDF/UA.
+
 .. note::
 
    This documentation is *self-referential*: the live examples below are
@@ -96,8 +100,8 @@ Key Features
   progressively enhanced with lightweight JavaScript for keyboard accessibility.
 - **Sphinx-native image handling** — images are registered with Sphinx's
   collector, land in ``_images/``, and participate in incremental builds.
-- **Multi-builder support** — full lightbox in HTML, ``\includegraphics``
-  with caption in LaTeX/PDF, plain image fallback in other builders.
+- **Multi-builder support** — full lightbox in HTML; native Sphinx image and
+  figure rendering in LaTeX/PDF, EPUB, text, manual-page, and Texinfo output.
 - **Accessibility-conscious design** — visible focus indicators, ``role="dialog"``,
   ``aria-modal``, accessible control text, ``prefers-reduced-motion``, focus
   management, and ``prefers-contrast: more`` support.

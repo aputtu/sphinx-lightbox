@@ -2,10 +2,9 @@
 API Reference
 =============
 
-This page documents the internal Python API of ``sphinx-lightbox``.  The
-public authoring interface is standard Sphinx ``image`` and ``figure``
-markup plus the ``.. lightbox::`` directive.
-The Python API below is primarily useful for contributors.
+This page documents the internal Python API of ``sphinx-lightbox``. The public
+authoring interface is standard Sphinx ``image`` and ``figure`` markup; see
+:doc:`directive`. The Python API below is primarily useful for contributors.
 
 Extension Setup
 ---------------
@@ -20,12 +19,6 @@ Nodes
 .. autoclass:: lightbox.lightbox.LightboxTrigger
 
 .. autoclass:: lightbox.lightbox.LightboxOverlay
-
-Directive
----------
-
-.. autoclass:: lightbox.lightbox.LightboxDirective
-   :members:
 
 Transforms
 ----------

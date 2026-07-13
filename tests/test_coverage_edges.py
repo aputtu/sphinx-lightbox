@@ -6,12 +6,13 @@ from unittest.mock import Mock, patch
 import pytest
 from docutils import nodes
 
-from lightbox import lightbox as lightbox_module
 from lightbox.lightbox import (
     LightboxContainer,
     LightboxDirective,
+    LightboxImageTransform,
     LightboxOverlay,
     LightboxTrigger,
+    _accessible_image_name,
     _clear_gallery_metadata,
     _container_checkbox_id,
     _copy_missing_lightbox_images,
@@ -43,7 +44,7 @@ def _copy_app(tmp_path: Path, env_images: object, image_uris: set[str] | None = 
 
     app = Mock()
     app.builder.format = "html"
-    app.builder.imgpath = "_images"
+    app.builder.imagedir = "_images"
     app.outdir = str(outdir)
     app.env.srcdir = str(srcdir)
     app.env.images = env_images
@@ -80,9 +81,32 @@ def _container(checkbox_id: str = "lb-1") -> tuple[LightboxContainer, LightboxOv
 def test_source_image_path_rejects_empty_remote_and_commonpath_errors() -> None:
     assert _source_image_path("", "images/example.png") is None
     assert _source_image_path("/docs", "https://example.invalid/image.png") is None
+    assert _source_image_path("/docs", "//cdn.example.invalid/image.png") is None
 
     with patch("lightbox.lightbox.os.path.commonpath", side_effect=ValueError):
         assert _source_image_path("/docs", "images/example.png") is None
+
+
+@pytest.mark.unit
+def test_accessible_image_name_uses_alt_filename_and_generic_fallbacks() -> None:
+    assert _accessible_image_name(" Explicit name ", "images/ignored.png") == "Explicit name"
+    assert _accessible_image_name("", "images/server_diagram-final.png") == "server diagram final"
+    assert _accessible_image_name("", "") == "Image"
+
+
+@pytest.mark.unit
+def test_source_image_path_rejects_symlinks_outside_srcdir(tmp_path: Path) -> None:
+    srcdir = tmp_path / "src"
+    srcdir.mkdir()
+    outside = tmp_path / "outside.png"
+    outside.write_bytes(b"outside")
+    link = srcdir / "linked.png"
+    try:
+        link.symlink_to(outside)
+    except OSError as exc:
+        pytest.skip(f"symlinks unavailable: {exc}")
+
+    assert _source_image_path(str(srcdir), "linked.png") is None
 
 
 @pytest.mark.unit
@@ -192,6 +216,50 @@ def test_copy_missing_lightbox_images_skips_unreferenced_images(tmp_path: Path) 
     assert not Path(app.outdir, "_images", "unused.png").exists()
 
 
+@pytest.mark.unit
+def test_copy_missing_lightbox_images_rejects_escaping_image_dir(tmp_path: Path) -> None:
+    app = _copy_app(tmp_path, {})
+    app.builder.imagedir = "../escaped-images"
+
+    with patch("lightbox.lightbox.logger") as logger:
+        _copy_missing_lightbox_images(app, None)
+
+    assert not tmp_path.joinpath("escaped-images").exists()
+    assert logger.warning.call_args.kwargs["subtype"] == "unsafe_image_dir"
+
+
+@pytest.mark.unit
+def test_copy_missing_lightbox_images_rejects_symlinked_image_dir(tmp_path: Path) -> None:
+    app = _copy_app(tmp_path, {})
+    outside = tmp_path / "outside-images"
+    outside.mkdir()
+    try:
+        Path(app.outdir, "_images").symlink_to(outside, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlinks unavailable: {exc}")
+
+    with patch("lightbox.lightbox.logger") as logger:
+        _copy_missing_lightbox_images(app, None)
+
+    assert list(outside.iterdir()) == []
+    assert logger.warning.call_args.kwargs["subtype"] == "unsafe_image_dir"
+
+
+@pytest.mark.unit
+def test_copy_missing_lightbox_images_ignores_image_dir_commonpath_errors(
+    tmp_path: Path,
+) -> None:
+    app = _copy_app(tmp_path, {})
+
+    with (
+        patch("lightbox.lightbox.os.path.commonpath", side_effect=ValueError),
+        patch("lightbox.lightbox.os.makedirs") as makedirs,
+    ):
+        _copy_missing_lightbox_images(app, None)
+
+    makedirs.assert_not_called()
+
+
 class _ItemsWithoutContains:
     def items(self) -> list[tuple[str, str]]:
         return [("images/missing.png", "missing.png")]
@@ -227,11 +295,32 @@ def test_copy_missing_lightbox_images_skips_target_outside_image_dir(tmp_path: P
 
     with patch(
         "lightbox.lightbox.os.path.commonpath",
-        side_effect=[str(Path(app.env.srcdir).resolve()), str(tmp_path.resolve())],
+        side_effect=[
+            str(Path(app.outdir).resolve()),
+            str(Path(app.env.srcdir).resolve()),
+            str(tmp_path.resolve()),
+        ],
     ):
         _copy_missing_lightbox_images(app, None)
 
     assert not Path(app.outdir, "_images", "missing.png").exists()
+
+
+@pytest.mark.unit
+def test_copy_missing_lightbox_images_rejects_symlinked_target(tmp_path: Path) -> None:
+    app = _copy_app(tmp_path, {"images/missing.png": "missing.png"}, {"images/missing.png"})
+    _write_source_image(app)
+    image_dir = Path(app.outdir, "_images")
+    image_dir.mkdir()
+    outside = tmp_path / "outside.png"
+    try:
+        image_dir.joinpath("missing.png").symlink_to(outside)
+    except OSError as exc:
+        pytest.skip(f"symlinks unavailable: {exc}")
+
+    _copy_missing_lightbox_images(app, None)
+
+    assert not outside.exists()
 
 
 @pytest.mark.unit
@@ -241,7 +330,11 @@ def test_copy_missing_lightbox_images_ignores_target_commonpath_errors(tmp_path:
 
     with patch(
         "lightbox.lightbox.os.path.commonpath",
-        side_effect=[str(Path(app.env.srcdir).resolve()), ValueError],
+        side_effect=[
+            str(Path(app.outdir).resolve()),
+            str(Path(app.env.srcdir).resolve()),
+            ValueError,
+        ],
     ):
         _copy_missing_lightbox_images(app, None)
 
@@ -260,6 +353,20 @@ def test_copy_missing_lightbox_images_warns_when_copy_fails(tmp_path: Path) -> N
         _copy_missing_lightbox_images(app, None)
 
     assert logger.warning.call_args.kwargs["subtype"] == "copy_image"
+
+
+@pytest.mark.unit
+def test_copy_missing_lightbox_images_leaves_existing_target_untouched(tmp_path: Path) -> None:
+    app = _copy_app(tmp_path, {"images/missing.png": "missing.png"}, {"images/missing.png"})
+    _write_source_image(app)
+    target = Path(app.outdir, "_images", "missing.png")
+    target.parent.mkdir()
+    target.write_bytes(b"existing")
+
+    with patch("lightbox.lightbox._missing_html_image_targets", return_value={"missing.png"}):
+        _copy_missing_lightbox_images(app, None)
+
+    assert target.read_bytes() == b"existing"
 
 
 @pytest.mark.unit
@@ -387,16 +494,35 @@ def test_directive_keeps_square_ratio_when_image_size_is_incomplete(sphinx_env: 
 
 
 @pytest.mark.unit
-def test_transform_on_read_uses_doctree_environment_docname() -> None:
-    app = Mock()
+def test_post_transform_uses_current_document_docname() -> None:
     doctree = nodes.document("", "")
     doctree.settings = Mock()
-    doctree.settings.env.docname = "nested/page"
+    doctree.settings.language_code = "en"
+    doctree.settings.env._app = Mock()
+    doctree.settings.env.current_document.docname = "nested/page"
+    post_transform = LightboxImageTransform(doctree)
 
     with patch("lightbox.lightbox.transform_lightbox_images") as transform:
-        lightbox_module._transform_lightbox_images_on_read(app, doctree)
+        post_transform.run()
 
-    transform.assert_called_once_with(app, doctree, "nested/page")
+    transform.assert_called_once_with(doctree.settings.env._app, doctree, "nested/page")
+
+
+@pytest.mark.unit
+def test_post_transform_supports_sphinx_seven_environment() -> None:
+    doctree = nodes.document("", "")
+    doctree.settings = Mock()
+    doctree.settings.language_code = "en"
+    del doctree.settings.env._app
+    del doctree.settings.env.current_document
+    doctree.settings.env.app = Mock()
+    doctree.settings.env.docname = "legacy/page"
+    post_transform = LightboxImageTransform(doctree)
+
+    with patch("lightbox.lightbox.transform_lightbox_images") as transform:
+        post_transform.run()
+
+    transform.assert_called_once_with(doctree.settings.env.app, doctree, "legacy/page")
 
 
 @pytest.mark.unit

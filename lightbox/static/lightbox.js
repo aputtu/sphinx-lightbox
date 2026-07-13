@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * This script enhances the pure-CSS checkbox-toggle lightbox with:
- *   1. Keyboard activation (Enter/Space) on <label> trigger and close controls
+ *   1. Keyboard activation (Enter/Space) on trigger and close button controls
  *   2. Escape key to close any open lightbox
  *   3. Gallery navigation with previous/next buttons and ArrowLeft/ArrowRight
  *   4. Focus management — move focus into overlay on open, restore on close
@@ -25,13 +25,13 @@
     }
     window.__sphinxLightboxInit = true;
 
-    document.addEventListener('DOMContentLoaded', function () {
-
+    function init() {
         /* ==============================================================
          * State: track which trigger opened the lightbox so we can
          * return focus to it on close.
          * ============================================================== */
         var _lastTrigger = null;
+        var _switching = false;
 
         /* ==============================================================
          * Helpers
@@ -49,8 +49,10 @@
             );
             var result = [];
             for (var i = 0; i < candidates.length; i++) {
-                /* Skip elements hidden by CSS or with aria-hidden="true" */
-                if (candidates[i].offsetParent !== null &&
+                /* Skip elements hidden by CSS or with aria-hidden="true".
+                   offsetParent is null for position: fixed elements, which every
+                   control in the overlay is, so test for rendered boxes instead. */
+                if (candidates[i].getClientRects().length > 0 &&
                     candidates[i].getAttribute('aria-hidden') !== 'true') {
                     result.push(candidates[i]);
                 }
@@ -67,11 +69,11 @@
         }
 
         /**
-         * Find the trigger <label> that targets the given checkbox id.
+         * Find the focusable trigger control for the given checkbox.
          */
         function getTriggerForCheckbox(checkbox) {
             var container = checkbox.closest('.lightbox-container');
-            return container ? container.querySelector('.lightbox-trigger-label') : null;
+            return container ? container.querySelector('.lightbox-trigger-control') : null;
         }
 
         /**
@@ -107,13 +109,23 @@
             }
 
             var openToggles = document.querySelectorAll('.lightbox-toggle:checked');
-            openToggles.forEach(function (toggle) {
-                if (toggle !== target) {
-                    toggle.checked = false;
-                    toggle.dispatchEvent(new Event('change'));
-                }
-            });
+            /* Closing the outgoing overlay is part of the same interaction as
+               opening the incoming one. Suppress its normal focus restoration;
+               the incoming overlay will receive focus before the next paint. */
+            _switching = true;
+            try {
+                openToggles.forEach(function (toggle) {
+                    if (toggle !== target) {
+                        toggle.checked = false;
+                        toggle.dispatchEvent(new Event('change'));
+                    }
+                });
+            } finally {
+                _switching = false;
+            }
 
+            /* Record the incoming trigger after the synchronous close events so
+               they cannot consume the focus-return target. */
             var trigger = getTriggerForCheckbox(target);
             if (trigger) {
                 _lastTrigger = trigger;
@@ -126,17 +138,15 @@
         }
 
         /* ==============================================================
-         * 1. Keyboard activation (Enter / Space) for label controls
+         * 1. Keyboard activation (Enter / Space) for custom button controls
          *
-         * <label> elements with tabindex="0" receive keyboard focus but
-         * do NOT natively fire their associated checkbox toggle on
-         * keydown/keypress events — only on a real click event.  We
-         * must therefore manually toggle the checkbox in the keydown
-         * handler.  This is the reason for the getAttribute('for') +
-         * getElementById pattern rather than simply calling .click().
+         * The controls are role="button" spans inside native labels. The
+         * labels preserve pointer and no-JavaScript checkbox toggling; these
+         * handlers provide the Space/Enter behavior required by button
+         * semantics without synthesizing a click and risking a double toggle.
          * ============================================================== */
         var controls = document.querySelectorAll(
-            '.lightbox-trigger-label, .lightbox-close'
+            '.lightbox-trigger-control, .lightbox-close'
         );
 
         controls.forEach(function (control) {
@@ -146,11 +156,11 @@
 
                     /* Record trigger before toggling so the change handler
                      * can pick it up for focus-return later. */
-                    if (this.classList.contains('lightbox-trigger-label')) {
+                    if (this.classList.contains('lightbox-trigger-control')) {
                         _lastTrigger = this;
                     }
 
-                    var targetId = this.getAttribute('for');
+                    var targetId = this.getAttribute('data-lightbox-target');
                     if (targetId) {
                         var checkbox = document.getElementById(targetId);
                         if (checkbox) {
@@ -244,6 +254,9 @@
                     }
                 } else {
                     /* --- CLOSE --- */
+                    if (_switching) {
+                        return;
+                    }
                     if (_lastTrigger) {
                         _lastTrigger.focus();
                         _lastTrigger = null;
@@ -292,5 +305,11 @@
                 }
             });
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true });
+    } else {
+        init();
+    }
 })();
