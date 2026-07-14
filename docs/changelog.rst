@@ -1,6 +1,25 @@
 Changelog
 =========
 
+Version 0.6.0 (2026-07-14)
+--------------------------
+
+- Make all extension-owned interface labels and warnings translatable through
+  Sphinx's extension localization API and a dedicated ``sphinx-lightbox``
+  gettext domain. Authored image text remains under the documentation
+  project's translation workflow, and catalogs belonging to Sphinx or other
+  extensions remain under their respective upstream projects.
+- Add a complete bundled Danish translation as the first localization,
+  covering accessible enlarge, close, previous, and next controls as well as
+  extension diagnostics. Danish builds activate it through the standard
+  ``language = "da"`` setting without project-specific locale paths.
+- Ship the source, translation, and compiled message catalogs in wheels and
+  source distributions. Document the Babel extraction and compilation
+  workflow, and add catalog, Sphinx-build, and distribution regression tests.
+- Exercise every supported Python 3.10 through 3.14 and Sphinx 7.0 through 9.1
+  combination in tox and CI with distinct minor-series constraints, including
+  the Sphinx 7.0 lower bound.
+
 Version 0.5.1 (2026-07-13)
 --------------------------
 

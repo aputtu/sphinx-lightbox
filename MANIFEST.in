@@ -6,6 +6,7 @@ recursive-include lightbox *.py
 recursive-include lightbox *.typed
 recursive-include lightbox/static *.css
 recursive-include lightbox/static *.js
+recursive-include lightbox/locales *.pot *.po *.mo
 
 prune .github
 prune build

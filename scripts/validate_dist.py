@@ -13,7 +13,12 @@ from collections import Counter
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 
-_PACKAGE_FILES = {".py", ".typed", ".css", ".js"}
+_PACKAGE_FILES = {".py", ".typed", ".css", ".js", ".pot", ".po", ".mo"}
+_TRANSLATION_FILES = {
+    "lightbox/locales/sphinx-lightbox.pot",
+    "lightbox/locales/da/LC_MESSAGES/sphinx-lightbox.po",
+    "lightbox/locales/da/LC_MESSAGES/sphinx-lightbox.mo",
+}
 _SDIST_ROOT_FILES = {
     "LICENSE",
     "MANIFEST.in",
@@ -33,7 +38,7 @@ _SDIST_REQUIRED = {
     "lightbox/py.typed",
     "lightbox/static/lightbox.css",
     "lightbox/static/lightbox.js",
-}
+} | _TRANSLATION_FILES
 _EGG_INFO_FILES = {
     "dependency_links.txt",
     "entry_points.txt",
@@ -48,7 +53,7 @@ _WHEEL_REQUIRED = {
     "lightbox/py.typed",
     "lightbox/static/lightbox.css",
     "lightbox/static/lightbox.js",
-}
+} | _TRANSLATION_FILES
 _SDIST_SOURCE_FILES = _WHEEL_REQUIRED | {
     "LICENSE",
     "MANIFEST.in",

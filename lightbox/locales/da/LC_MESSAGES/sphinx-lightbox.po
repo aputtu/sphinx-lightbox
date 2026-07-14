@@ -1,0 +1,116 @@
+# Danish translations for sphinx-lightbox.
+# Copyright (C) 2026 Aputsiak Niels Janussen
+# This file is distributed under the same license as the sphinx-lightbox
+# project.
+# Aputsiak Niels Janussen <aputtu+sphinx@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: sphinx-lightbox 0.6.0\n"
+"Report-Msgid-Bugs-To: https://github.com/aputtu/sphinx-lightbox/issues\n"
+"POT-Creation-Date: 2026-07-14 04:18+0200\n"
+"PO-Revision-Date: 2026-07-14 04:11+0200\n"
+"Last-Translator: Aputsiak Niels Janussen <aputtu+sphinx@gmail.com>\n"
+"Language: da\n"
+"Language-Team: Danish\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#. Translators: Generic accessible name used only when neither alt text nor
+#. a usable image filename is available.
+#: lightbox/lightbox.py:122
+msgid "Image"
+msgstr "Billede"
+
+#: lightbox/lightbox.py:149
+#, python-brace-format
+msgid "Invalid lightbox thumbnail width {width!r}; falling back to '100%'."
+msgstr "Ugyldig bredde {width!r} på lysboksminiaturen; bruger '100%' i stedet."
+
+#: lightbox/lightbox.py:167
+msgid "Invalid lightbox inline style suppressed."
+msgstr "Ugyldig inline-CSS for lysboksen blev udeladt."
+
+#: lightbox/lightbox.py:327
+#, python-brace-format
+msgid ""
+"Refusing to copy lightbox images outside the output directory: "
+"'{directory}'"
+msgstr "Afviser at kopiere lysboksbilleder uden for outputmappen: '{directory}'"
+
+#: lightbox/lightbox.py:363
+#, python-brace-format
+msgid "Could not copy lightbox image '{source}' to '{target}': {error}"
+msgstr "Kunne ikke kopiere lysboksbilledet '{source}' til '{target}': {error}"
+
+#: lightbox/lightbox.py:421
+#, python-brace-format
+msgid ""
+"Invalid {config_name} value {policy!r}; expected one of 'explicit', "
+"'all', or 'none'. Falling back to 'explicit'."
+msgstr ""
+"Ugyldig værdi {policy!r} for {config_name}; forventede en af 'explicit', "
+"'all' eller 'none'. Bruger 'explicit' i stedet."
+
+#: lightbox/lightbox.py:437
+#, python-brace-format
+msgid ""
+"Invalid lightbox_gallery value {mode!r}; expected 'document' or 'none'. "
+"Falling back to 'document'."
+msgstr ""
+"Ugyldig værdi {mode!r} for lightbox_gallery; forventede 'document' eller "
+"'none'. Bruger 'document' i stedet."
+
+#. Translators: Accessible label for the control that opens an enlarged image.
+#: lightbox/lightbox.py:701
+#, python-brace-format
+msgid "Enlarge image: {image}"
+msgstr "Forstør billede: {image}"
+
+#. Translators: Accessible label for the previous-image gallery button.
+#: lightbox/lightbox.py:746
+#, python-brace-format
+msgid "Previous image in gallery ({index} of {count})"
+msgstr "Forrige billede i galleriet ({index} af {count})"
+
+#. Translators: Accessible label for the next-image gallery button.
+#: lightbox/lightbox.py:752
+#, python-brace-format
+msgid "Next image in gallery ({index} of {count})"
+msgstr "Næste billede i galleriet ({index} af {count})"
+
+#. Translators: Accessible label for the control that closes the image dialog.
+#: lightbox/lightbox.py:758
+msgid "Close lightbox"
+msgstr "Luk billedvisning"
+
+#: lightbox/lightbox.py:881
+#, python-brace-format
+msgid ""
+"Could not calculate image dimensions for '{path}': {error}. Falling back "
+"to 1:1 aspect ratio."
+msgstr ""
+"Kunne ikke beregne billeddimensionerne for '{path}': {error}. Bruger "
+"formatforholdet 1:1 i stedet."
+
+#: lightbox/lightbox.py:908
+#, python-brace-format
+msgid ""
+"Invalid :latex-width: value '{value}'. Expected a float between 0 and 1 "
+"(e.g. 0.8). Falling back to percentage-based width."
+msgstr ""
+"Ugyldig værdi '{value}' for :latex-width:. Forventede et decimaltal "
+"mellem 0 og 1 (f.eks. 0.8). Bruger den procentbaserede bredde i stedet."
+
+#: lightbox/lightbox.py:971
+#, python-brace-format
+msgid "Lightbox image path traverses outside source directory: {path}"
+msgstr "Stien til lysboksbilledet går uden for kildemappen: {path}"
+
+#: lightbox/lightbox.py:982
+#, python-brace-format
+msgid "Lightbox image not found: {path}"
+msgstr "Lysboksbilledet blev ikke fundet: {path}"

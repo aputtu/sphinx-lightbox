@@ -29,8 +29,16 @@ texescape.init()
 
 
 @pytest.fixture(scope="session")
-def rootdir() -> Path:
-    return Path(__file__).parent.parent.absolute()
+def rootdir() -> object:
+    root = Path(__file__).parent.parent.absolute()
+
+    # Sphinx 7.0's testing fixtures call ``copytree`` on their legacy path
+    # wrapper. Sphinx 7.1 and newer use ``pathlib.Path`` plus ``shutil``.
+    try:
+        from sphinx.testing.util import path as sphinx_test_path
+    except ImportError:
+        return root
+    return sphinx_test_path(root)
 
 
 @pytest.fixture
@@ -54,7 +62,7 @@ def mock_builder():
 
 
 @pytest.fixture
-def sphinx_env():
+def sphinx_env(monkeypatch: pytest.MonkeyPatch):
     """
     Mock Sphinx environment with minimal required attributes.
     Provides docname, srcdir, and an images collection without
@@ -66,6 +74,7 @@ def sphinx_env():
 
     env.images = Mock()
     env.images.add_file = Mock()
+    monkeypatch.setattr("sphinx.util.images.get_image_size", lambda _path: (1, 1))
 
     _serial_counters: dict = {}
 

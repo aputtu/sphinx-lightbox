@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from bs4 import BeautifulSoup
 from sphinx.testing.util import SphinxTestApp
 
@@ -12,13 +14,13 @@ _PNG_BYTES = (
 
 
 def write_image(app: SphinxTestApp, relative_path: str = "images/example.png") -> None:
-    image_path = app.srcdir.joinpath(relative_path)
+    image_path = Path(app.srcdir).joinpath(relative_path)
     image_path.parent.mkdir(parents=True, exist_ok=True)
     image_path.write_bytes(_PNG_BYTES)
 
 
 def write_index(app: SphinxTestApp, content: str) -> None:
-    app.srcdir.joinpath("index.rst").write_text(content, encoding="utf-8")
+    Path(app.srcdir).joinpath("index.rst").write_text(content, encoding="utf-8")
 
 
 def build_index(app: SphinxTestApp, content: str) -> None:
@@ -27,7 +29,7 @@ def build_index(app: SphinxTestApp, content: str) -> None:
 
 
 def html_text(app: SphinxTestApp) -> str:
-    return app.outdir.joinpath("index.html").read_text(encoding="utf-8")
+    return Path(app.outdir).joinpath("index.html").read_text(encoding="utf-8")
 
 
 def html_soup(app: SphinxTestApp) -> BeautifulSoup:

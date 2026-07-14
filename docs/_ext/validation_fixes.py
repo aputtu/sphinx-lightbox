@@ -8,7 +8,6 @@ from urllib.parse import unquote, urlsplit
 
 from sphinx.application import Sphinx
 from sphinx.util.images import get_image_size
-from sphinx.util.typing import ExtensionMetadata
 
 _HEADING_WITHOUT_LEVEL_RE = re.compile(r'<p\b(?=[^>]*\brole="heading")[^>]*>')
 _PRE_WITHOUT_TABINDEX_RE = re.compile(r"<pre(?![^>]*\btabindex=)([^>]*)>")
@@ -133,7 +132,7 @@ def _patch_generated_docs(app: Sphinx, exception: Exception | None) -> None:
     _patch_generated_html(outdir)
 
 
-def setup(app: Sphinx) -> ExtensionMetadata:
+def setup(app: Sphinx) -> dict[str, object]:
     app.connect("build-finished", _patch_generated_docs)
     return {
         "version": "1.0",

@@ -790,7 +790,10 @@ class TestMissingImage:
         state = Mock()
         state.document.settings.env = sphinx_env
         directive = LightboxDirective("lightbox", ["/no.png"], {}, [], 1, 0, "", state, Mock())
-        with patch("lightbox.lightbox.os.path.isfile", return_value=False):
+        with (
+            patch("lightbox.lightbox.os.path.isfile", return_value=False),
+            patch("lightbox.lightbox.logger"),
+        ):
             assert directive.run() == []
 
     @pytest.mark.unit

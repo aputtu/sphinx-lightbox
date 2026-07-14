@@ -121,6 +121,36 @@ gallery switching, forward and reverse focus trapping, accessible control
 roles and names, visible focus indicators, and focused controls that remain
 rendered and unobscured at desktop and compact viewport sizes.
 
+Maintaining Translations
+------------------------
+
+Extension-owned messages use the dedicated ``sphinx-lightbox`` gettext domain
+under ``lightbox/locales``. When a marked ``_()`` message changes, refresh the
+template and language catalogs with Babel:
+
+.. code-block:: bash
+
+   pybabel extract --add-comments=Translators \
+       --project=sphinx-lightbox --version=0.6.0 \
+       --copyright-holder="Aputsiak Niels Janussen" \
+       --msgid-bugs-address="https://github.com/aputtu/sphinx-lightbox/issues" \
+       --output=lightbox/locales/sphinx-lightbox.pot lightbox
+   pybabel update --domain=sphinx-lightbox \
+       --input-file=lightbox/locales/sphinx-lightbox.pot \
+       --output-dir=lightbox/locales
+
+After editing the ``.po`` translations, compile the runtime catalogs and run
+the checks:
+
+.. code-block:: bash
+
+   pybabel compile --domain=sphinx-lightbox --directory=lightbox/locales
+   make check
+
+Commit the ``.pot``, ``.po``, and compiled ``.mo`` files together. Catalogs
+belonging to Sphinx or other extensions are maintained in their respective
+upstream projects and are not overridden here.
+
 Direct Script Usage
 -------------------
 

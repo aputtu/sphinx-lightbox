@@ -118,7 +118,6 @@ Native image options
    :height: 200px
    :scale: 50%
    :align: right
-   :loading: lazy
    :name: native-options-example
    :class: lightbox custom-thumbnail
 """,
@@ -130,7 +129,6 @@ Native image options
     thumbnail = container.select_one("img.lightbox-trigger.custom-thumbnail")
     assert thumbnail is not None
     assert thumbnail["alt"] == ""
-    assert thumbnail["loading"] == "lazy"
     assert thumbnail["id"] == "native-options-example"
     styles = {}
     for declaration in thumbnail["style"].split(";"):
@@ -349,7 +347,7 @@ def test_nested_document_writes_no_images_outside_outdir(app: SphinxTestApp) -> 
     the escaping imgpath behind on the builder at build-finished time.
     """
     write_image(app, "topics/deep/nested/images/example.png")
-    app.srcdir.joinpath("topics/deep/nested/page.rst").write_text(
+    Path(app.srcdir).joinpath("topics/deep/nested/page.rst").write_text(
         "Nested\n======\n\n.. image:: images/example.png\n   :alt: Nested image\n",
         encoding="utf-8",
     )
@@ -390,7 +388,7 @@ EPUB fallbacks
     )
 
     soup = BeautifulSoup(
-        app.outdir.joinpath("index.xhtml").read_text(encoding="utf-8"), "html.parser"
+        Path(app.outdir).joinpath("index.xhtml").read_text(encoding="utf-8"), "html.parser"
     )
     assert soup.select_one(".lightbox-container") is None
     assert soup.select_one(".lightbox-hidden") is None

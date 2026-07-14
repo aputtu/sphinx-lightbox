@@ -19,20 +19,25 @@ import posixpath
 import re
 import shutil
 from html import escape as html_escape
+from pathlib import Path
 from typing import Any, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
+from sphinx.locale import get_translation
 from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.texescape import escape as latex_escape
-from sphinx.util.typing import ExtensionMetadata
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.5.1"
+__version__ = "0.6.0"
+
+_MESSAGE_CATALOG = "sphinx-lightbox"
+_LOCALE_DIR = Path(__file__).resolve().parent / "locales"
+_ = get_translation(_MESSAGE_CATALOG)
 
 
 class LightboxContainer(nodes.General, nodes.Element):
@@ -111,7 +116,9 @@ def _accessible_image_name(alt_text: str, uri: str) -> str:
     if alt_text.strip():
         return alt_text.strip()
     stem = posixpath.splitext(posixpath.basename(uri.rstrip("/")))[0]
-    return re.sub(r"[-_]+", " ", stem).strip() or "Image"
+    # Translators: Generic accessible name used only when neither alt text nor
+    # a usable image filename is available.
+    return re.sub(r"[-_]+", " ", stem).strip() or _("Image")
 
 
 def _source_image_path(srcdir: str, uri: str) -> str | None:
@@ -138,7 +145,9 @@ def _sanitize_css_width(width: str) -> str:
     if _SAFE_CSS_WIDTH_RE.fullmatch(width):
         return width
     logger.warning(
-        f"Invalid lightbox thumbnail width {width!r}; falling back to '100%'.",
+        _("Invalid lightbox thumbnail width {width!r}; falling back to '100%'.").format(
+            width=width
+        ),
         type="lightbox",
         subtype="invalid_style",
     )
@@ -154,7 +163,7 @@ def _sanitize_style_attr(style: str) -> str:
     ):
         return style
     logger.warning(
-        "Invalid lightbox inline style suppressed.",
+        _("Invalid lightbox inline style suppressed."),
         type="lightbox",
         subtype="invalid_style",
     )
@@ -313,7 +322,9 @@ def _copy_missing_lightbox_images(app: Sphinx, exception: Exception | None) -> N
     try:
         if os.path.commonpath([outdir, image_dir]) != outdir:
             logger.warning(
-                f"Refusing to copy lightbox images outside the output directory: '{image_dir}'",
+                _(
+                    "Refusing to copy lightbox images outside the output directory: '{directory}'"
+                ).format(directory=image_dir),
                 type="lightbox",
                 subtype="unsafe_image_dir",
             )
@@ -348,7 +359,11 @@ def _copy_missing_lightbox_images(app: Sphinx, exception: Exception | None) -> N
             shutil.copyfile(source_path, target_path)
         except OSError as exc:
             logger.warning(
-                f"Could not copy lightbox image '{source_path}' to '{target_path}': {exc}",
+                _("Could not copy lightbox image '{source}' to '{target}': {error}").format(
+                    source=source_path,
+                    target=target_path,
+                    error=exc,
+                ),
                 type="lightbox",
                 subtype="copy_image",
             )
@@ -401,8 +416,10 @@ def _policy(app: Sphinx, config_name: str) -> str:
     policy = cast(str, getattr(app.config, config_name)).lower()
     if policy not in _POLICIES:
         logger.warning(
-            f"Invalid {config_name!s} value {policy!r}; expected one of "
-            "'explicit', 'all', or 'none'. Falling back to 'explicit'.",
+            _(
+                "Invalid {config_name} value {policy!r}; expected one of 'explicit', "
+                "'all', or 'none'. Falling back to 'explicit'."
+            ).format(config_name=config_name, policy=policy),
             type="lightbox",
             subtype="invalid_config",
         )
@@ -415,8 +432,10 @@ def _gallery_mode(app: Sphinx) -> str:
     mode = cast(str, app.config.lightbox_gallery).lower()
     if mode not in _GALLERY_MODES:
         logger.warning(
-            f"Invalid lightbox_gallery value {mode!r}; expected 'document' or "
-            "'none'. Falling back to 'document'.",
+            _(
+                "Invalid lightbox_gallery value {mode!r}; expected 'document' or 'none'. "
+                "Falling back to 'document'."
+            ).format(mode=mode),
             type="lightbox",
             subtype="invalid_config",
         )
@@ -676,13 +695,15 @@ def depart_lightbox_container_html(self: Any, node: LightboxContainer) -> None:
 
 def visit_lightbox_trigger_html(self: Any, node: LightboxTrigger) -> None:
     checkbox_id = html_escape(node["checkbox_id"], quote=True)
-    alt_text = html_escape(_accessible_image_name(node.get("alt", ""), node["uri"]), quote=True)
+    image_name = _accessible_image_name(node.get("alt", ""), node["uri"])
+    # Translators: Accessible label for the control that opens an enlarged image.
+    enlarge_label = html_escape(_("Enlarge image: {image}").format(image=image_name), quote=True)
 
     self.body.append(
         f'<label for="{checkbox_id}" class="lightbox-trigger-label">\n'
         f'  <span class="lightbox-trigger-control" role="button" tabindex="0" '
         f'data-lightbox-target="{checkbox_id}">\n'
-        f'    <span class="lightbox-visually-hidden">Enlarge image: {alt_text}</span>\n'
+        f'    <span class="lightbox-visually-hidden">{enlarge_label}</span>\n'
     )
 
     # Legacy directive nodes do not contain a native image child. Keep their
@@ -720,14 +741,20 @@ def visit_lightbox_overlay_html(self: Any, node: LightboxOverlay) -> None:
     gallery_count = int(node.get("gallery_count", 0))
     prev_target = html_escape(node.get("gallery_prev_target", ""), quote=True)
     next_target = html_escape(node.get("gallery_next_target", ""), quote=True)
+    # Translators: Accessible label for the previous-image gallery button.
+    prev_label_text = _("Previous image in gallery ({index} of {count})")
     prev_label = html_escape(
-        f"Previous image in gallery ({gallery_index} of {gallery_count})",
+        prev_label_text.format(index=gallery_index, count=gallery_count),
         quote=True,
     )
+    # Translators: Accessible label for the next-image gallery button.
+    next_label_text = _("Next image in gallery ({index} of {count})")
     next_label = html_escape(
-        f"Next image in gallery ({gallery_index} of {gallery_count})",
+        next_label_text.format(index=gallery_index, count=gallery_count),
         quote=True,
     )
+    # Translators: Accessible label for the control that closes the image dialog.
+    close_label = html_escape(_("Close lightbox"), quote=True)
 
     cls = custom_class.strip() if custom_class else ""
     self.body.append(
@@ -739,7 +766,7 @@ def visit_lightbox_overlay_html(self: Any, node: LightboxOverlay) -> None:
         f'<span class="lightbox-close" role="button" tabindex="0" '
         f'data-lightbox-target="{checkbox_id}">'
         f'<span aria-hidden="true">&times;</span>'
-        f'<span class="lightbox-visually-hidden">Close lightbox</span></span></label>\n'
+        f'<span class="lightbox-visually-hidden">{close_label}</span></span></label>\n'
     )
     if prev_target:
         self.body.append(
@@ -849,8 +876,10 @@ class LightboxDirective(SphinxDirective):
                 aspect_ratio = width / height
         except Exception as e:
             logger.warning(
-                f"Could not calculate image dimensions for '{raw_path}': {e}. "
-                "Falling back to 1:1 aspect ratio.",
+                _(
+                    "Could not calculate image dimensions for '{path}': {error}. "
+                    "Falling back to 1:1 aspect ratio."
+                ).format(path=raw_path, error=e),
                 location=(env.docname, self.lineno),
                 type="lightbox",
                 subtype="image_dimensions",
@@ -874,9 +903,10 @@ class LightboxDirective(SphinxDirective):
                 latex_width = f"{val:.2f}"
             except ValueError:
                 logger.warning(
-                    f"Invalid :latex-width: value '{latex_width_override}'. "
-                    "Expected a float between 0 and 1 (e.g. 0.8). "
-                    "Falling back to percentage-based width.",
+                    _(
+                        "Invalid :latex-width: value '{value}'. Expected a float between 0 "
+                        "and 1 (e.g. 0.8). Falling back to percentage-based width."
+                    ).format(value=latex_width_override),
                     location=(env.docname, self.lineno),
                     type="lightbox",
                     subtype="invalid_option",
@@ -937,7 +967,9 @@ class LightboxDirective(SphinxDirective):
                 raise ValueError
         except ValueError:
             logger.warning(
-                f"Lightbox image path traverses outside source directory: {raw_path}",
+                _("Lightbox image path traverses outside source directory: {path}").format(
+                    path=raw_path
+                ),
                 location=(env.docname, self.lineno),
                 type="lightbox",
                 subtype="path_traversal",
@@ -946,7 +978,7 @@ class LightboxDirective(SphinxDirective):
 
         if not os.path.isfile(abs_fs_path):
             logger.warning(
-                f"Lightbox image not found: {abs_fs_path}",
+                _("Lightbox image not found: {path}").format(path=abs_fs_path),
                 location=(env.docname, self.lineno),
                 type="lightbox",
                 subtype="image_not_found",
@@ -961,8 +993,9 @@ class LightboxDirective(SphinxDirective):
 # ---------------------------------------------------------------------------
 
 
-def setup(app: Sphinx) -> ExtensionMetadata:
+def setup(app: Sphinx) -> dict[str, Any]:
     app.require_sphinx("7.0")
+    app.add_message_catalog(_MESSAGE_CATALOG, _LOCALE_DIR)
     app.add_config_value("lightbox_all_images", False, "env", bool)
     app.add_config_value("lightbox_images", "explicit", "env", str)
     app.add_config_value("lightbox_figures", "all", "env", str)

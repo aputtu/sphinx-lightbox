@@ -179,6 +179,23 @@ When a document has more than one lightbox, users can also navigate with
 Left Arrow and Right Arrow. A single lightbox does not render gallery controls.
 Set ``lightbox_gallery = "none"`` to keep every lightbox independent.
 
+Language and Translations
+-------------------------
+
+The extension translates its own generated interface text using Sphinx's
+``language`` setting. For example, a Danish documentation build needs only the
+normal Sphinx configuration:
+
+.. code-block:: python
+
+   language = "da"
+
+The bundled Danish catalog then localizes the lightbox's enlarge, close,
+previous, and next accessibility labels as well as extension warnings. Image
+alternative text, captions, legends, and other authored content remain under
+the documentation project's own translation workflow. No project-level
+``locale_dirs`` entry is needed for the extension's bundled catalog.
+
 Styling
 -------
 
